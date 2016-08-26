@@ -17,6 +17,7 @@ StreamDumper::StreamDumper(const std::string &file_name, int64_t bytes_to_dump )
 StreamDumper::~StreamDumper() {
     if ( file ) {
         fclose( file );
+        cout << "File was closed" << endl;
     }
 }
 

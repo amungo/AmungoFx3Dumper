@@ -2,6 +2,7 @@
 #define FX3DEVDEBUGINFO
 
 #include <cstdint>
+#include <iostream>
 
 #include "fx3deverr.h"
 
@@ -23,6 +24,10 @@ struct fx3_dev_debug_info_t {
         phy_err_inc( 0 ), lnk_err_inc( 0 ), phy_errs( 0 ), lnk_errs( 0 ),
         err_reg_hex( 0 ), size_tx_mb_inc( 0.0 ), speed_only( true )
     {}
+
+    void print() {
+        std::cout << std::endl << size_tx_mb_inc << " tx, errs: " << phy_errs << " +" << phy_err_inc << std::endl;
+    }
 };
 
 

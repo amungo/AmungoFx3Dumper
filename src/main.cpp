@@ -64,40 +64,77 @@ int main( int argn, const char** argv )
     }
     cout << "Device was inited." << endl << endl;
 
-    cout << "Determinating sample rate..." << endl;
-    fx3_dev_debug_info_t info1 = dev->getDebugInfoFromBoard(true);
+    cout << "Determinating sample rate and USB transfer quality..." << endl;
+    fx3_dev_debug_info_t info1 = dev->getDebugInfoFromBoard(false);
     dev->startRead(nullptr);
-    double sleep_seconds = 5.1;
-    std::this_thread::sleep_for(std::chrono::milliseconds((int)(1000.0 * sleep_seconds)));
-    fx3_dev_debug_info_t info2 = dev->getDebugInfoFromBoard(true);
-    size_t CHIP_SR = (size_t)(info2.size_tx_mb_inc - info1.size_tx_mb_inc) * ( 1024.0 * 1024.0 )/sleep_seconds;
 
-    cout << "Sample rate is ~" << CHIP_SR / 1000000 << " MHz " << endl;
-    const size_t bytes_per_sample = 1;
-    size_t bytes_to_dump = (size_t)( CHIP_SR * seconds * bytes_per_sample );
+    double size_mb = 0.0;
+    double phy_errs = 0;
+    int sleep_ms = 200;
+    int iter_cnt = 20;
+    double overall_seconds = ( sleep_ms * iter_cnt ) / 1000.0;
+    fx3_dev_debug_info_t info = dev->getDebugInfoFromBoard();;
+    for ( int i = 0; i < iter_cnt; i++ ) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
+        info = dev->getDebugInfoFromBoard();
+        size_mb += info.size_tx_mb_inc;
+        phy_errs += info.phy_err_inc;
+    }
+
+    int64_t CHIP_SR = (int64_t)((size_mb * 1024.0 * 1024.0 )/overall_seconds);
+
+    cout << endl;
+    cout << "SAMPLE RATE is ~" << CHIP_SR / 1000000 << " MHz " << endl;
+    cout << "ERROR  RATE is  " << phy_errs / size_mb << " errors per one megabyte" << endl;
+    cout << endl;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 
+    const int64_t bytes_per_sample = 1;
+    int64_t bytes_to_dump = (int64_t)( CHIP_SR * seconds * bytes_per_sample );
+    uint32_t overs_cnt_at_start = info.overflows;
 
-    cout << "Start dumping data" << endl;
-
-
+    if ( bytes_to_dump ) {
+        cout << "Start dumping data" << endl;
+    } else {
+        cout << "Start testing USB transfer" << endl;
+    }
+    int32_t iter_time_ms = 5000;
     try {
+
         StreamDumper dumper( dumpfile, bytes_to_dump );
-        dev->changeHandler(&dumper);
+        if ( bytes_to_dump ) {
+            dev->changeHandler(&dumper);
+        } else {
+            dev->changeHandler(nullptr);
+        }
 
-        for ( int i = 0; i < 300; i++ ) {
-            DumperStatus_e status = dumper.GetStatus();
-            if ( status == DS_DONE ) {
-                break;
-            } else if ( status == DS_ERROR ) {
-                cerr << "Stop because of FILE IO errors" << endl;
-                break;
+        for ( ;; ) {
+            if ( bytes_to_dump ) {
+                cout << "\r";
+            } else {
+                cout << endl << "Just testing. Press Ctrl-C to exit.  ";
             }
-            cout << "\r";
+            if ( bytes_to_dump ) {
+                DumperStatus_e status = dumper.GetStatus();
+                if ( status == DS_DONE ) {
+                    break;
+                } else if ( status == DS_ERROR ) {
+                    cerr << "Stop because of FILE IO errors" << endl;
+                    break;
+                }
+                cout << dumper.GetBytesToGo() / ( bytes_per_sample * CHIP_SR ) << " seconds to go. ";
+            }
 
-            cout << dumper.GetBytesToGo() / ( bytes_per_sample * CHIP_SR ) << " seconds to go      ";
+            info = dev->getDebugInfoFromBoard();
+            info.overflows -= overs_cnt_at_start;
+            cout << "Overflows count: " << info.overflows << "    ";
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+            if ( info.overflows_inc ) {
+                throw std::runtime_error( "### OVERFLOW DETECTED ON BOARD. DATA SKIP IS VERY POSSIBLE. EXITING ###" );
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(iter_time_ms));
         }
         cout << endl;
 
