@@ -112,7 +112,7 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
 
 void FX3DevCyAPI::startRead(DeviceDataHandlerIfce *handler) {
     size_tx_mb = 0.0;
-    startTransferData(0, 128, 4, 1500);
+    startTransferData(0, 128, 64, 1500);
     data_handler = handler;
     xfer_thread = std::thread(&FX3DevCyAPI::xfer_loop, this);
 }
