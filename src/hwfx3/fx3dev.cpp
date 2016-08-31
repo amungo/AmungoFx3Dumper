@@ -2,10 +2,7 @@
 #include <string.h>
 #include "FX3Dev.h"
 #include "HexParser.h"
-
-#ifdef WIN32
-#include <windows.h>
-#endif
+#include "pointdrawer.h"
 
 FX3Dev::FX3Dev( size_t one_block_size8, uint32_t dev_buffers_count ) :
     ctx( NULL ),
@@ -88,11 +85,7 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char
             if ( eres == FX3_ERR_OK ) {
                 fprintf( stderr, "FX3Dev::Init() flash completed!\nPlease wait for %d seconds\n", PAUSE_AFTER_FLASH_SECONDS );
                 for ( int i = 0; i < PAUSE_AFTER_FLASH_SECONDS * 2; i++ ) {
-                    #ifdef WIN32
-                    Sleep( 500 );
-                    #else
-                    usleep( 500000 );
-                    #endif
+                    std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     fprintf( stderr, "*" );
                 }
                 fprintf( stderr, "\n" );
@@ -127,6 +120,7 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char
     
     if ( additionalFirmwareFileName != NULL ) {
         if ( additionalFirmwareFileName[ 0 ] != 0 ) {
+            PointDrawer drawer;
             eres = loadAdditionalFirmware( additionalFirmwareFileName, 112 );
             if ( eres != FX3_ERR_OK ) {
                 fprintf( stderr, "FX3Dev::Init() __error__ loadAdditionalFirmware %d %s\n", eres, fx3_get_error_string( eres ) );
@@ -386,12 +380,8 @@ fx3_dev_err_t FX3Dev::loadAdditionalFirmware( const char* fw_name, uint32_t stop
         if ( eres != FX3_ERR_OK ) {
             return eres;
         }
-        
-        #ifdef WIN32
-        Sleep( ADD_FW_LOAD_PAUSE_MS );
-        #else
-        usleep( ADD_FW_LOAD_PAUSE_MS * 1000 );
-        #endif
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(ADD_FW_LOAD_PAUSE_MS));
         
         if ( addr[i] == stop_addr ) {
             break;
@@ -568,11 +558,8 @@ void FX3Dev::stopRead() {
             libusb_cancel_transfer(transfers[i]);
         }
         fprintf( stderr, "FX3Dev::stopRead() stopping read_thread...\n" );
-        #ifdef WIN32
-        Sleep( DEV_DOWNLOAD_TIMEOUT_MS * buffers_count );
-        #else
-        usleep( DEV_DOWNLOAD_TIMEOUT_MS * buffers_count );
-        #endif
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(DEV_DOWNLOAD_TIMEOUT_MS));
         
         event_loop_running = false;
         event_thread.join();

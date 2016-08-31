@@ -68,8 +68,8 @@ private:
     static const uint8_t  CMD_READ_DBG  = 0xB4;          // Vendor command for reading debug data from device.
     
     //static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_NONE;
-    //static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_ERROR;
-    static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_WARNING;
+    static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_ERROR;
+    //static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_WARNING;
     //static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_INFO;
     //static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_DEBUG;
     

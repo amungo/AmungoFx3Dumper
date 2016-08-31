@@ -1,6 +1,7 @@
 #include "fx3devcyapi.h"
 #ifndef NO_CY_API
 
+#include "pointdrawer.h"
 #include "HexParser.h"
 
 FX3DevCyAPI::FX3DevCyAPI() :
@@ -27,7 +28,7 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
     bool need_fw_load = stream == 0 && boot > 0;
 
     if ( need_fw_load ) {
-        fprintf( stderr, "FX3DevCyAPI::init() fw load needed\n" );
+        if ( log ) fprintf( stderr, "FX3DevCyAPI::init() fw load needed\n" );
 
         FILE* f = fopen( firmwareFileName, "r" );
         if ( !f ) {
@@ -48,7 +49,7 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
                         return FX3_ERR_CTRL_TX_FAIL;
                 }
             } else {
-                fprintf( stderr, "FX3DevCyAPI::init() boot ok!\n" );
+                if ( log ) fprintf( stderr, "FX3DevCyAPI::init() boot ok!\n" );
             }
         } else {
             fprintf( stderr, "__error__ FX3DevCyAPI::init() StartParams.USBDevice->IsBootLoaderRunning() is FALSE\n" );
@@ -59,13 +60,9 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
 
     if ( need_fw_load ) {
         int PAUSE_AFTER_FLASH_SECONDS = 2;
-        fprintf( stderr, "FX3DevCyAPI::Init() flash completed!\nPlease wait for %d seconds\n", PAUSE_AFTER_FLASH_SECONDS );
+        if ( log ) fprintf( stderr, "FX3DevCyAPI::Init() flash completed!\nPlease wait for %d seconds\n", PAUSE_AFTER_FLASH_SECONDS );
         for ( int i = 0; i < PAUSE_AFTER_FLASH_SECONDS * 2; i++ ) {
-            #ifdef WIN32
-            Sleep( 500 );
-            #else
-            usleep( 500000 );
-            #endif
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
             fprintf( stderr, "*" );
         }
         fprintf( stderr, "\n" );
@@ -85,6 +82,9 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
 
     if ( additionalFirmwareFileName != NULL ) {
         if ( additionalFirmwareFileName[ 0 ] != 0 ) {
+
+            PointDrawer drawer;
+
             res = loadAdditionalFirmware( additionalFirmwareFileName, 112 );
             if ( res != FX3_ERR_OK ) {
                 fprintf( stderr, "FX3DevCyAPI::Init() __error__ loadAdditionalFirmware %d %s\n", res, fx3_get_error_string( res ) );
@@ -103,7 +103,7 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
     int EndPointsCount = EndPointsParams.size();
     for(int i = 0; i < EndPointsCount; i++){
         GetEndPointParamsByInd(i, &Attr, &In, &MaxPktSize, &MaxBurst, &Interface, &Address);
-        fprintf( stderr, "FX3DevCyAPI::Init() EndPoint[%d], Attr=%d, In=%d, MaxPktSize=%d, MaxBurst=%d, Infce=%d, Addr=%d\n",
+        if ( log ) fprintf( stderr, "FX3DevCyAPI::Init() EndPoint[%d], Attr=%d, In=%d, MaxPktSize=%d, MaxBurst=%d, Infce=%d, Addr=%d\n",
                  i, Attr, In, MaxPktSize, MaxBurst, Interface, Address);
     }
 
@@ -123,7 +123,7 @@ void FX3DevCyAPI::stopRead() {
         xfer_thread.join();
         data_handler = NULL;
     }
-    fprintf( stderr, "FX3DevCyAPI::stopRead() all done!\n" );
+    if ( log ) fprintf( stderr, "FX3DevCyAPI::stopRead() all done!\n" );
 }
 
 void FX3DevCyAPI::changeHandler(DeviceDataHandlerIfce *handler) {
@@ -135,7 +135,7 @@ void FX3DevCyAPI::sendAttCommand5bits(uint32_t bits) {
     UCHAR buf[16];
     buf[0]=(UCHAR)(bits);
 
-    fprintf( stderr, "FX3DevCyAPI::sendAttCommand5bits() %0x02X\n", bits );
+    if ( log ) fprintf( stderr, "FX3DevCyAPI::sendAttCommand5bits() %0x02X\n", bits );
      
     long len=16;
     int success=StartParams.USBDevice->BulkOutEndPt->XferData(&buf[0],len);
@@ -202,15 +202,15 @@ fx3_dev_err_t FX3DevCyAPI::scan(int &loadable_count , int &streamable_count) {
     }
     unsigned short product = StartParams.USBDevice->ProductID;
     unsigned short vendor  = StartParams.USBDevice->VendorID;
-    fprintf( stderr, "Device: 0x%04X 0x%04X ", vendor, product );
+    if ( log ) fprintf( stderr, "Device: 0x%04X 0x%04X ", vendor, product );
     if ( vendor == VENDOR_ID && product == PRODUCT_STREAM ) {
-        fprintf( stderr, " STREAM\n" );
+        if ( log ) fprintf( stderr, " STREAM\n" );
         streamable_count++;
     } else if ( vendor == VENDOR_ID && product == PRODUCT_BOOT ) {
-        fprintf( stderr,  "BOOT\n" );
+        if ( log ) fprintf( stderr,  "BOOT\n" );
         loadable_count++;
     }
-    fprintf( stderr, "\n" );
+    if ( log ) fprintf( stderr, "\n" );
 
     if (loadable_count + streamable_count == 0) {
         return FX3_ERR_BAD_DEVICE;
@@ -352,12 +352,8 @@ fx3_dev_err_t FX3DevCyAPI::loadAdditionalFirmware(const char* fw_name, uint32_t 
             return eres;
         }
         
-        uint32_t ADD_FW_LOAD_PAUSE_MS      = 20;
-        #ifdef WIN32
-        Sleep( ADD_FW_LOAD_PAUSE_MS );
-        #else
-        usleep( ADD_FW_LOAD_PAUSE_MS * 1000 );
-        #endif
+        uint32_t ADD_FW_LOAD_PAUSE_MS = 20;
+        std::this_thread::sleep_for(std::chrono::milliseconds(ADD_FW_LOAD_PAUSE_MS));
         
         if ( addr[i] == stop_addr ) {
             break;
@@ -395,7 +391,7 @@ fx3_dev_err_t FX3DevCyAPI::read16bitSPI(unsigned char addr, unsigned char* data)
     buf[0] = (UCHAR)(*data);
     buf[1] = (UCHAR)(addr|0x80);
 
-    fprintf( stderr, "FX3Dev::read16bitSPI() from  0x%02X\n", addr );
+    if ( log ) fprintf( stderr, "FX3Dev::read16bitSPI() from  0x%02X\n", addr );
 
     CCyControlEndPoint* CtrlEndPt;
     CtrlEndPt = StartParams.USBDevice->ControlEndPt;
@@ -423,7 +419,7 @@ fx3_dev_err_t FX3DevCyAPI::read16bitSPI(unsigned char addr, unsigned char* data)
 
 fx3_dev_err_t FX3DevCyAPI::send24bitSPI(unsigned char data, unsigned short addr)
 {
-    fprintf( stderr, "[0x%03X] <= 0x%02X\n", addr, data );
+    if ( log ) fprintf( stderr, "[0x%03X] <= 0x%02X\n", addr, data );
 
     UCHAR buf[16];
     addr |= 0x8000;
@@ -457,7 +453,7 @@ fx3_dev_err_t FX3DevCyAPI::read24bitSPI(unsigned short addr, unsigned char* data
     buf[1] = (UCHAR)(addr&0x0FF);
     buf[2] = (UCHAR)(addr>>8);
 
-    fprintf( stderr, "FX3Dev::read24bitSPI() from  0x%03X\n", addr );
+    if ( log ) fprintf( stderr, "FX3Dev::read24bitSPI() from  0x%03X\n", addr );
 
     CCyControlEndPoint* CtrlEndPt;
     CtrlEndPt = StartParams.USBDevice->ControlEndPt;
@@ -472,7 +468,7 @@ fx3_dev_err_t FX3DevCyAPI::read24bitSPI(unsigned short addr, unsigned char* data
 
     *data = buf[0];
     if ( success ) {
-        fprintf( stderr, "[0x%03X] => 0x%02X\n", addr, *data );
+        if ( log ) fprintf( stderr, "[0x%03X] => 0x%02X\n", addr, *data );
     } else {
         fprintf( stderr, "__error__ FX3Dev::read24bitSPI() FAILED\n" );
     }
@@ -611,7 +607,7 @@ void FX3DevCyAPI::xfer_loop() {
 
     AbortXferLoop( Params, Params->QueueSize, buffers, isoPktInfos, contexts, inOvLap );
 
-    fprintf( stderr, "FX3DevCyAPI::xfer_loop() finished\n" );
+    if ( log ) fprintf( stderr, "FX3DevCyAPI::xfer_loop() finished\n" );
 }
 
 uint8_t FX3DevCyAPI::peek8(uint32_t register_address24) {

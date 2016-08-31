@@ -36,7 +36,11 @@ int main( int argn, const char** argv )
     bool useCypress = ( driver == std::string( "cypress" ) );
 
     cout << "------------------------------" << endl;
-    cout << "Dump " << seconds << " seconds to '" << dumpfile << "'" << endl;
+    if ( seconds ) {
+        cout << "Dump " << seconds << " seconds to '" << dumpfile << "'" << endl;
+    } else {
+        cout << "No dumping - just testing!" << endl;
+    }
     cout << "Using fx3 image from '" << fximg << "' and nt1065 config from '" << ntcfg << "'" << endl;
     cout << "Your OS use _" << ( useCypress ? "cypress" : "libusb" ) << "_ driver" << endl;
     cout << "------------------------------" << endl;
@@ -55,6 +59,8 @@ int main( int argn, const char** argv )
     if ( useCypress ) {
         dev = new FX3DevCyAPI();
     } else {
+        cout << endl << endl << "!!! WARNING !!!" << endl << "THERE ARE PROBLEMS WITH libusb at this time" << endl;
+        std::this_thread::sleep_for(std::chrono::seconds(3));
         dev = new FX3Dev();
     }
 
@@ -64,8 +70,13 @@ int main( int argn, const char** argv )
     }
     cout << "Device was inited." << endl << endl;
 
-    cout << "Determinating sample rate and USB transfer quality..." << endl;
-    fx3_dev_debug_info_t info1 = dev->getDebugInfoFromBoard(false);
+    cout << "Determinating sample rate";
+    if ( !seconds ) {
+        cout << " and USB noise level...";
+    }
+    cout << endl;
+
+    dev->getDebugInfoFromBoard(false);
     dev->startRead(nullptr);
 
     double size_mb = 0.0;
@@ -84,8 +95,10 @@ int main( int argn, const char** argv )
     int64_t CHIP_SR = (int64_t)((size_mb * 1024.0 * 1024.0 )/overall_seconds);
 
     cout << endl;
-    cout << "SAMPLE RATE is ~" << CHIP_SR / 1000000 << " MHz " << endl;
-    cout << "ERROR  RATE is  " << phy_errs / size_mb << " errors per one megabyte" << endl;
+    cout << "SAMPLE RATE  is ~" << CHIP_SR / 1000000 << " MHz " << endl;
+    if ( !seconds ) {
+        cout << "NOISE  LEVEL is  " << phy_errs / size_mb << " noisy packets per one megabyte" << endl;
+    }
     cout << endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 

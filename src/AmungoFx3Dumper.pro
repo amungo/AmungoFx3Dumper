@@ -11,7 +11,8 @@ SOURCES += main.cpp \
     hwfx3/HexParser.cpp \
     processors/streamdumper.cpp \
     sys/NamedClass.cpp \
-    sys/Runnable.cpp
+    sys/Runnable.cpp \
+    hwfx3/pointdrawer.cpp
 
 HEADERS += \
     hwfx3/cy_inc/CyAPI.h \
@@ -35,7 +36,8 @@ HEADERS += \
     sys/MessageReceiverIfce.h \
     sys/NamedClass.h \
     sys/Runnable.h \
-    sys/SingleEvent.h
+    sys/SingleEvent.h \
+    hwfx3/pointdrawer.h
 
 
 

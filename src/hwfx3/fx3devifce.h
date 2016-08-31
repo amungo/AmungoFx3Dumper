@@ -14,6 +14,7 @@ public:
 
 class FX3DevIfce {
 public:
+    FX3DevIfce( bool logging = false ) : log( logging ){}
     virtual ~FX3DevIfce(){}
 
     // Opens device and flash it if neccessary (set firmwareFileName to NULL to disable flashing)
@@ -33,7 +34,8 @@ public:
 
     virtual fx3_dev_debug_info_t getDebugInfoFromBoard( bool ask_speed_only = false ) = 0;
 
-
+protected:
+    bool log;
 };
 
 #endif // FX3DEVIFCE
