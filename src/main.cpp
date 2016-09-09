@@ -2,7 +2,10 @@
 #include <chrono>
 
 #include "hwfx3/fx3dev.h"
+
+#ifdef WIN32
 #include "hwfx3/fx3devcyapi.h"
+#endif
 
 #include "processors/streamdumper.h"
 
@@ -56,6 +59,8 @@ int main( int argn, const char** argv )
 
     cout << "Wait while device is being initing..." << endl;
     FX3DevIfce* dev = nullptr;
+
+#ifdef WIN32
     if ( useCypress ) {
         dev = new FX3DevCyAPI();
     } else {
@@ -63,6 +68,9 @@ int main( int argn, const char** argv )
         std::this_thread::sleep_for(std::chrono::seconds(3));
         dev = new FX3Dev();
     }
+#else
+    dev = new FX3Dev();
+#endif
 
     if ( dev->init(fximg.c_str(), ntcfg.c_str() ) != FX3_ERR_OK ) {
         cout << endl << "Problems with hardware or driver type" << endl;

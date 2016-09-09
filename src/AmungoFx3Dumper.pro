@@ -5,7 +5,6 @@ CONFIG -= qt
 
 SOURCES += main.cpp \
     hwfx3/fx3dev.cpp \
-    hwfx3/fx3devcyapi.cpp \
     hwfx3/fx3deverr.cpp \
     hwfx3/fx3fwparser.cpp \
     hwfx3/HexParser.cpp \
@@ -15,13 +14,6 @@ SOURCES += main.cpp \
     hwfx3/pointdrawer.cpp
 
 HEADERS += \
-    hwfx3/cy_inc/CyAPI.h \
-    hwfx3/cy_inc/cyioctl.h \
-    hwfx3/cy_inc/CyUSB30_def.h \
-    hwfx3/cy_inc/usb100.h \
-    hwfx3/cy_inc/usb200.h \
-    hwfx3/cy_inc/UsbdStatus.h \
-    hwfx3/cy_inc/VersionNo.h \
     hwfx3/fx3dev.h \
     hwfx3/fx3devcyapi.h \
     hwfx3/fx3devdebuginfo.h \
@@ -38,6 +30,20 @@ HEADERS += \
     sys/Runnable.h \
     sys/SingleEvent.h \
     hwfx3/pointdrawer.h
+
+win32: SOURCES += \
+        hwfx3/fx3devcyapi.cpp
+
+win32: HEADERS += \
+        hwfx3/cy_inc/CyAPI.h \
+        hwfx3/cy_inc/cyioctl.h \
+        hwfx3/cy_inc/CyUSB30_def.h \
+        hwfx3/cy_inc/usb100.h \
+        hwfx3/cy_inc/usb200.h \
+        hwfx3/cy_inc/UsbdStatus.h \
+        hwfx3/cy_inc/VersionNo.h \
+
+
 
 
 
