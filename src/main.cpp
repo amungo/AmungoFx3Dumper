@@ -13,6 +13,10 @@ using namespace std;
 
 int main( int argn, const char** argv )
 {
+#ifndef WIN32
+    setbuf(stdout, NULL);
+    setbuf(stderr, NULL);
+#endif
 
     cout << "*** Amungo's dumper for nut4nt board ***" << endl << endl;
     if ( argn != 6 ) {
@@ -66,10 +70,10 @@ int main( int argn, const char** argv )
     } else {
         cout << endl << endl << "!!! WARNING !!!" << endl << "THERE ARE PROBLEMS WITH libusb at this time" << endl;
         std::this_thread::sleep_for(std::chrono::seconds(3));
-        dev = new FX3Dev();
+        dev = new FX3Dev( 2 * 1024 * 1024, 7 );
     }
 #else
-    dev = new FX3Dev();
+    dev = new FX3Dev( 2 * 1024 * 1024, 7 );
 #endif
 
     if ( dev->init(fximg.c_str(), ntcfg.c_str() ) != FX3_ERR_OK ) {
@@ -92,10 +96,11 @@ int main( int argn, const char** argv )
     int sleep_ms = 200;
     int iter_cnt = 20;
     double overall_seconds = ( sleep_ms * iter_cnt ) / 1000.0;
-    fx3_dev_debug_info_t info = dev->getDebugInfoFromBoard();;
+    fx3_dev_debug_info_t info = dev->getDebugInfoFromBoard();
     for ( int i = 0; i < iter_cnt; i++ ) {
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
         info = dev->getDebugInfoFromBoard();
+        //info.print();
         size_mb += info.size_tx_mb_inc;
         phy_errs += info.phy_err_inc;
     }

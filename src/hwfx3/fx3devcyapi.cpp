@@ -155,6 +155,7 @@ fx3_dev_debug_info_t FX3DevCyAPI::getDebugInfoFromBoard(bool ask_speed_only) {
         return info;
     } else {
         UCHAR buf[32];
+        std::fill( &buf[0], &buf[31], 0 );
 
         CCyControlEndPoint* CtrlEndPt;
         CtrlEndPt = StartParams.USBDevice->ControlEndPt;

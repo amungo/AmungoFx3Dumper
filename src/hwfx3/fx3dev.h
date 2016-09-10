@@ -75,7 +75,7 @@ private:
     
     static const int32_t  PAUSE_AFTER_FLASH_SECONDS = 2;    // Seconds to wait after firmware is loaded.
     static const uint32_t DEV_UPLOAD_TIMEOUT_MS     = 1000; // Timeout for uploading one block of firmware. Block size is less or equal to MAX_UPLOAD_BLOCK_SIZE8 bytes.
-    static const uint32_t DEV_DOWNLOAD_TIMEOUT_MS   =  500; // Timeout for downloading one block of data from device. One block size is half_full_size8 (set in constructor).
+    static const uint32_t DEV_DOWNLOAD_TIMEOUT_MS   = 5000; // Timeout for downloading one block of data from device. One block size is half_full_size8 (set in constructor).
     
     static const uint32_t ADD_FW_LOAD_PAUSE_MS      = 20;   // Pause used for loading additional fw (in ms)
     static const uint32_t FW_LOAD_TRY_COUNT         = 10;   // Try count for loading firmware

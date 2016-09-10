@@ -26,7 +26,9 @@ struct fx3_dev_debug_info_t {
     {}
 
     void print() {
-        std::cout << std::endl << size_tx_mb_inc << " tx, errs: " << phy_errs << " +" << phy_err_inc << std::endl;
+        std::cout << std::endl << size_tx_mb_inc << " tx, errs: " << phy_errs << " +" << phy_err_inc
+                  << " counter = " << transfers
+                  << std::endl;
     }
 };
 
