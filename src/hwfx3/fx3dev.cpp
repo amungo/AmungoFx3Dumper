@@ -77,13 +77,13 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char
     fx3_dev_err_t eres = FX3_ERR_OK;
 
     if ( endpoint_from_dev_num == endpoint_invalid ) {
-        fprintf( stderr, "FX3Dev::Init() asked to flash firmware. Looking for device without firmware (pid = 0x%04x)\n", DEV_PID_FOR_FW_LOAD );
+        if ( log ) fprintf( stderr, "FX3Dev::Init() asked to flash firmware. Looking for device without firmware (pid = 0x%04x)\n", DEV_PID_FOR_FW_LOAD );
         device_handle = libusb_open_device_with_vid_pid( ctx, VENDOR_ID, DEV_PID_FOR_FW_LOAD );
         if( device_handle != NULL ) {
-            fprintf( stderr, "FX3Dev::Init() Found device. Will flash it with firmware from file '%s'\n", firmwareFileName );
+            if ( log ) fprintf( stderr, "FX3Dev::Init() Found device. Will flash it with firmware from file '%s'\n", firmwareFileName );
             eres = firmwareFlashFromFile( firmwareFileName );
             if ( eres == FX3_ERR_OK ) {
-                fprintf( stderr, "FX3Dev::Init() flash completed!\nPlease wait for %d seconds\n", PAUSE_AFTER_FLASH_SECONDS );
+                if ( log ) fprintf( stderr, "FX3Dev::Init() flash completed!\nPlease wait for %d seconds\n", PAUSE_AFTER_FLASH_SECONDS );
                 for ( int i = 0; i < PAUSE_AFTER_FLASH_SECONDS * 2; i++ ) {
                     std::this_thread::sleep_for(std::chrono::milliseconds(500));
                     fprintf( stderr, "*" );
@@ -99,7 +99,7 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char
                 return eres;
             }
         } else {
-            fprintf( stderr, "FX3Dev::Init() no device without firmware found. Maybe already flashed?\n" );
+            if ( log ) fprintf( stderr, "FX3Dev::Init() no device without firmware found. Maybe already flashed?\n" );
         }
         last_overflow_count = 0;
     }
@@ -109,7 +109,7 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char
         return FX3_ERR_BAD_DEVICE;
     }
     
-    fprintf( stderr, "FX3Dev::Init() Proceed to init flashed device (0x%04x)\n", DEV_PID_NO_FW_NEEDED );
+    if ( log ) fprintf( stderr, "FX3Dev::Init() Proceed to init flashed device (0x%04x)\n", DEV_PID_NO_FW_NEEDED );
     
     device_handle = libusb_open_device_with_vid_pid( ctx, VENDOR_ID, DEV_PID_NO_FW_NEEDED );
     
@@ -146,7 +146,7 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char
 }
 
 fx3_dev_err_t FX3Dev::scan() {
-    fprintf( stderr, "FX3Dev::scan()\n" );
+    if ( log ) fprintf( stderr, "FX3Dev::scan()\n" );
     int ires;
     libusb_device **devs;
     ssize_t dev_cnt = libusb_get_device_list( ctx, &devs );
@@ -154,23 +154,23 @@ fx3_dev_err_t FX3Dev::scan() {
         fprintf( stderr, "FX3Dev::Init(): __error__ libusb_get_device_list() error %d %s\n", dev_cnt, libusb_error_name( dev_cnt ) );
         return FX3_ERR_USB_INIT_FAIL;
     }
-    fprintf( stderr, "FX3Dev::scan() libusb_get_device_list returned %d\n", dev_cnt );
+    if ( log ) fprintf( stderr, "FX3Dev::scan() libusb_get_device_list returned %d\n", dev_cnt );
     for ( int i = 0; devs[ i ] != NULL; i++ ) {
         libusb_device_descriptor desc;
         ires = libusb_get_device_descriptor( devs[ i ], &desc );
         if ( ires < 0 ) {
-            fprintf( stderr, "libusb_get_device_descriptor %d %s\n", ires, libusb_error_name( ires ) );
+            if ( log ) fprintf( stderr, "libusb_get_device_descriptor %d %s\n", ires, libusb_error_name( ires ) );
         } else {
             uint8_t bus  = libusb_get_bus_number(devs[i]);
             uint8_t port = libusb_get_port_number(devs[i]);
-            fprintf( stderr, "[%2d] bus:%u port:%u 0x%04x, 0x%04x", i, bus, port, desc.idVendor, desc.idProduct );
+            if ( log ) fprintf( stderr, "[%2d] bus:%u port:%u 0x%04x, 0x%04x", i, bus, port, desc.idVendor, desc.idProduct );
             if ( desc.idVendor == VENDOR_ID ) {
                 if ( desc.idProduct == DEV_PID_FOR_FW_LOAD ) {
-                    fprintf( stderr, " *** firmware needed\n" );
+                    if ( log ) fprintf( stderr, " *** firmware needed\n" );
                 } else if ( desc.idProduct == DEV_PID_NO_FW_NEEDED ) {
-                    fprintf( stderr, " *** ready adc device\n" );
+                    if ( log ) fprintf( stderr, " *** ready adc device\n" );
                 } else {
-                    fprintf( stderr, " *** driver compatible device" );
+                    if ( log ) fprintf( stderr, " *** driver compatible device" );
                 }
                 
                 
@@ -182,15 +182,17 @@ fx3_dev_err_t FX3Dev::scan() {
                     inter = &config->interface[i];
                     for(int j=0; j<inter->num_altsetting; j++) {
                         interdesc = &inter->altsetting[j];
-                        fprintf( stderr, "%d endpoints\n", interdesc->bNumEndpoints );
+                        if ( log ) fprintf( stderr, "%d endpoints\n", interdesc->bNumEndpoints );
                         for(int k=0; k<interdesc->bNumEndpoints; k++) {
                             uint8_t num = ( interdesc->endpoint[k].bEndpointAddress & ( 0x0F ) );
                             libusb_endpoint_direction dir = ( libusb_endpoint_direction )( interdesc->endpoint[k].bEndpointAddress & ( 0x80 ) );
                             uint16_t maxSize = interdesc->endpoint[k].wMaxPacketSize;
-                            fprintf( stderr, "    [%d] %s - %u bytes max\n",
-                                     num,
-                                     dir == LIBUSB_ENDPOINT_IN ? "IN  (dev-to-host)" : "OUT (host-to-dev)",
-                                     maxSize);
+                            if ( log ) {
+                                fprintf( stderr, "    [%d] %s - %u bytes max\n",
+                                         num,
+                                         dir == LIBUSB_ENDPOINT_IN ? "IN  (dev-to-host)" : "OUT (host-to-dev)",
+                                         maxSize);
+                            }
                             if ( dir == LIBUSB_ENDPOINT_IN ) {
                                 endpoint_from_dev_num = num;
                             } else {
@@ -201,7 +203,7 @@ fx3_dev_err_t FX3Dev::scan() {
                 }
                 libusb_free_config_descriptor(config);
             }
-            fprintf( stderr, "\n" );
+            if ( log ) fprintf( stderr, "\n" );
             
         }
     }
@@ -540,7 +542,7 @@ void FX3Dev::startRead( DeviceDataHandlerIfce* handler ) {
 }
 
 void FX3Dev::event_loop( void ) {
-    fprintf( stderr, "FX3Dev::read_loop() started\n" );
+    if ( log ) fprintf( stderr, "FX3Dev::read_loop() started\n" );
     while(event_loop_running) {
         struct timeval tv  = { 0, DEV_DOWNLOAD_TIMEOUT_MS * 1000 };
         int res = libusb_handle_events_timeout_completed( NULL, &tv, NULL );

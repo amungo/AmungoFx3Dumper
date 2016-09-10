@@ -62,11 +62,12 @@ fx3_dev_err_t FX3DevFwParser::firmwareParse( const uint8_t* firmware_buffer, uin
             buf += section_size8;
             rest_size8 -= section_size8;
 
-            fprintf( stderr, "SECTION[%2d]: addr8 0x%08X...0x%08X, length: 0x%08X (%6u) bytes, rest %6d bytes\n",
-                     sections_output.size() - 1,
-                     section_addr, section_addr + section_size8,
-                     section_size8, section_size8,
-                     rest_size8 );
+//            fprintf( stderr, "SECTION[%2d]: addr8 0x%08X...0x%08X, length: 0x%08X (%6u) bytes, rest %6d bytes\n",
+//                     sections_output.size() - 1,
+//                     section_addr, section_addr + section_size8,
+//                     section_size8, section_size8,
+//                     rest_size8 );
+
         } else {
             // case 2 (final). No sections anymore in file.
 
@@ -82,7 +83,7 @@ fx3_dev_err_t FX3DevFwParser::firmwareParse( const uint8_t* firmware_buffer, uin
             section.dev_dest_addr      = program_entry_address;
             sections_output.push_back( section );
 
-            fprintf( stderr, "PROGRAM_ENTRY: 0x%08X\n", program_entry_address );
+            //fprintf( stderr, "PROGRAM_ENTRY: 0x%08X\n", program_entry_address );
 
             // Check checksum
             uint32_t expected_check_sum = (*(uint32_t*)buf);
@@ -103,7 +104,7 @@ fx3_dev_err_t FX3DevFwParser::firmwareParse( const uint8_t* firmware_buffer, uin
             return FX3_ERR_FIRMWARE_FILE_CORRUPTED;
         }
     }
-    fprintf( stderr, "FX3Dev::firmwareParse Found %d sections, rest space %d bytes\n", sections_output.size(), rest_size8 );
+    // fprintf( stderr, "FX3Dev::firmwareParse Found %d sections, rest space %d bytes\n", sections_output.size(), rest_size8 );
     return FX3_ERR_OK;
 }
 
