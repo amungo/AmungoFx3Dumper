@@ -68,8 +68,6 @@ int main( int argn, const char** argv )
     if ( useCypress ) {
         dev = new FX3DevCyAPI();
     } else {
-        cout << endl << endl << "!!! WARNING !!!" << endl << "THERE ARE PROBLEMS WITH libusb at this time" << endl;
-        std::this_thread::sleep_for(std::chrono::seconds(3));
         dev = new FX3Dev( 2 * 1024 * 1024, 7 );
     }
 #else
@@ -82,14 +80,19 @@ int main( int argn, const char** argv )
     }
     cout << "Device was inited." << endl << endl;
 
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
     cout << "Determinating sample rate";
     if ( !seconds ) {
         cout << " and USB noise level...";
     }
     cout << endl;
 
-    dev->getDebugInfoFromBoard(false);
     dev->startRead(nullptr);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    dev->getDebugInfoFromBoard(false);
 
     double size_mb = 0.0;
     double phy_errs = 0;
@@ -101,9 +104,11 @@ int main( int argn, const char** argv )
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
         info = dev->getDebugInfoFromBoard();
         //info.print();
+        cout << ".";
         size_mb += info.size_tx_mb_inc;
         phy_errs += info.phy_err_inc;
     }
+    cout << endl;
 
     int64_t CHIP_SR = (int64_t)((size_mb * 1024.0 * 1024.0 )/overall_seconds);
 
