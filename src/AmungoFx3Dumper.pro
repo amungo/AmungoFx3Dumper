@@ -75,3 +75,4 @@ win32:!win32-g++: PRE_TARGETDEPS += $$PWD/libs/cyapi/x86/CyAPI.lib
 else:win32-g++: PRE_TARGETDEPS += $$PWD/libs/cyapi/x86/libCyAPI.a
 
 unix:!macx: LIBS += -lusb-1.0
+unix: LIBS += -lpthread

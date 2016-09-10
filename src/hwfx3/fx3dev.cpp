@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "FX3Dev.h"
+#include "fx3dev.h"
 #include "HexParser.h"
 #include "pointdrawer.h"
 
