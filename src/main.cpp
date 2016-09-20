@@ -18,50 +18,68 @@ int main( int argn, const char** argv )
     setbuf(stderr, NULL);
 #endif
 
-    cout << "*** Amungo's dumper for nut4nt board ***" << endl << endl;
+    cerr << "*** Amungo's dumper for nut4nt board ***" << endl << endl;
     if ( argn != 6 ) {
-        cout << "Usage: "
-             << "AmungoFx3Dumper"   << " "
-             << "FX3_IMAGE"         << " "
-             << "NT1065_CFG"        << " "
-             << "OUT_FILE"          << " "
-             << "SECONDS"           << " "
+        cerr << "Usage: "
+             << "AmungoFx3Dumper"     << " "
+             << "FX3_IMAGE"           << " "
+             << "NT1065_CFG"          << " "
+             << " OUT_FILE | stdout " << " "
+             << " SECONDS | inf"      << " "
              << "cypress | libusb"
              << endl << endl;
 
-        cout << "Example (dumping one minute of signal and use cypress driver):" << endl;
-        cout << "AmungoFx3Dumper fx3_nt1065_8bit.img  nt1065.hex  dump4ch.bin  60  cypress" << endl;
+        cerr << "Use 'stdout'' as a file name to direct signal to standart output stream" << endl;
+        cerr << endl;
+
+        cerr << "Example (dumping one minute of signal and use cypress driver):" << endl;
+        cerr << "AmungoFx3Dumper AmungoItsFx3Firmware.img  nt1065.hex  dump4ch.bin  60  cypress" << endl;
+        cerr << endl;
+
+        cerr << "Example (dumping signal non-stop to stdout):" << endl;
+        cerr << "AmungoFx3Dumper AmungoItsFx3Firmware.img  nt1065.hex  stdout  inf  libusb" << endl;
+        cerr << endl;
         return 0;
     }
 
     std::string fximg( argv[1] );
     std::string ntcfg( argv[2] );
     std::string dumpfile( argv[3] );
-    double seconds = atof( argv[4] );
+
+    double seconds = 0.0;
+    const double INF_SECONDS = 10.0 * 365.0 * 24.0 * 60.0 * 60.0;
+    if ( string(argv[4]) == string("inf") ) {
+        seconds = INF_SECONDS;
+    } else {
+        seconds = atof( argv[4] );
+    }
+
     std::string driver( argv[5] );
 
-    bool useCypress = ( driver == std::string( "cypress" ) );
+    bool useCypress = ( driver == string( "cypress" ) );
 
-    cout << "------------------------------" << endl;
-    if ( seconds ) {
-        cout << "Dump " << seconds << " seconds to '" << dumpfile << "'" << endl;
+    cerr << "------------------------------" << endl;
+    if ( seconds >= INF_SECONDS ) {
+        cerr << "Dump non-stop to " << dumpfile << endl;
+    } else if ( seconds > 0.0 ) {
+        cerr << "Dump " << seconds << " seconds to '" << dumpfile << "'" << endl;
     } else {
-        cout << "No dumping - just testing!" << endl;
+        cerr << "No dumping - just testing!" << endl;
     }
-    cout << "Using fx3 image from '" << fximg << "' and nt1065 config from '" << ntcfg << "'" << endl;
-    cout << "Your OS use _" << ( useCypress ? "cypress" : "libusb" ) << "_ driver" << endl;
-    cout << "------------------------------" << endl;
+    cerr << "Using fx3 image from '" << fximg << "' and nt1065 config from '" << ntcfg << "'" << endl;
+    cerr << "Your OS use _" << ( useCypress ? "cypress" : "libusb" ) << "_ driver" << endl;
+    cerr << "------------------------------" << endl;
 
-    char answer = 'n';
-    cout << "Is this correct? [y/n] ";
-    cin >> answer;
+//    char answer = 'n';
+//    cerr << "Is this correct? [y/n] ";
+//    cin >> answer;
 
-    if ( answer != 'y' ) {
-        cout << "Try to run with correct parameters" << endl;
-        return 0;
-    }
+//    if ( answer != 'y' ) {
+//        cerr << "Try to run with correct parameters" << endl;
+//        return 0;
+//    }
 
-    cout << "Wait while device is being initing..." << endl;
+    cerr << "Wait while device is being initing..." << endl;
     FX3DevIfce* dev = nullptr;
 
 #ifdef WIN32
@@ -75,18 +93,18 @@ int main( int argn, const char** argv )
 #endif
 
     if ( dev->init(fximg.c_str(), ntcfg.c_str() ) != FX3_ERR_OK ) {
-        cout << endl << "Problems with hardware or driver type" << endl;
+        cerr << endl << "Problems with hardware or driver type" << endl;
         return -1;
     }
-    cout << "Device was inited." << endl << endl;
+    cerr << "Device was inited." << endl << endl;
 
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    cout << "Determinating sample rate";
+    cerr << "Determinating sample rate";
     if ( !seconds ) {
-        cout << " and USB noise level...";
+        cerr << " and USB noise level...";
     }
-    cout << endl;
+    cerr << endl;
 
     dev->startRead(nullptr);
 
@@ -104,20 +122,20 @@ int main( int argn, const char** argv )
         std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
         info = dev->getDebugInfoFromBoard();
         //info.print();
-        cout << ".";
+        cerr << ".";
         size_mb += info.size_tx_mb_inc;
         phy_errs += info.phy_err_inc;
     }
-    cout << endl;
+    cerr << endl;
 
     int64_t CHIP_SR = (int64_t)((size_mb * 1024.0 * 1024.0 )/overall_seconds);
 
-    cout << endl;
-    cout << "SAMPLE RATE  is ~" << CHIP_SR / 1000000 << " MHz " << endl;
+    cerr << endl;
+    cerr << "SAMPLE RATE  is ~" << CHIP_SR / 1000000 << " MHz " << endl;
     if ( !seconds ) {
-        cout << "NOISE  LEVEL is  " << phy_errs / size_mb << " noisy packets per one megabyte" << endl;
+        cerr << "NOISE  LEVEL is  " << phy_errs / size_mb << " noisy packets per one megabyte" << endl;
     }
-    cout << endl;
+    cerr << endl;
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 
@@ -126,9 +144,9 @@ int main( int argn, const char** argv )
     uint32_t overs_cnt_at_start = info.overflows;
 
     if ( bytes_to_dump ) {
-        cout << "Start dumping data" << endl;
+        cerr << "Start dumping data" << endl;
     } else {
-        cout << "Start testing USB transfer" << endl;
+        cerr << "Start testing USB transfer" << endl;
     }
     int32_t iter_time_ms = 5000;
     try {
@@ -142,9 +160,9 @@ int main( int argn, const char** argv )
 
         for ( ;; ) {
             if ( bytes_to_dump ) {
-                cout << "\r";
+                cerr << "\r";
             } else {
-                cout << endl << "Just testing. Press Ctrl-C to exit.  ";
+                cerr << endl << "Just testing. Press Ctrl-C to exit.  ";
             }
             if ( bytes_to_dump ) {
                 DumperStatus_e status = dumper.GetStatus();
@@ -154,12 +172,12 @@ int main( int argn, const char** argv )
                     cerr << "Stop because of FILE IO errors" << endl;
                     break;
                 }
-                cout << dumper.GetBytesToGo() / ( bytes_per_sample * CHIP_SR ) << " seconds to go. ";
+                cerr << dumper.GetBytesToGo() / ( bytes_per_sample * CHIP_SR ) << " seconds to go. ";
             }
 
             info = dev->getDebugInfoFromBoard();
             info.overflows -= overs_cnt_at_start;
-            cout << "Overflows count: " << info.overflows << "    ";
+            cerr << "Overflows count: " << info.overflows << "    ";
 
             if ( info.overflows_inc ) {
                 throw std::runtime_error( "### OVERFLOW DETECTED ON BOARD. DATA SKIP IS VERY POSSIBLE. EXITING ###" );
@@ -167,11 +185,11 @@ int main( int argn, const char** argv )
 
             std::this_thread::sleep_for(std::chrono::milliseconds(iter_time_ms));
         }
-        cout << endl;
+        cerr << endl;
 
         cerr << "Dump done" << endl;
     } catch ( std::exception& e ){
-        cout << endl << "Error!" << endl;
+        cerr << endl << "Error!" << endl;
         cerr << e.what();
     }
 

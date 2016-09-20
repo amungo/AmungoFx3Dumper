@@ -8,7 +8,13 @@ using namespace std;
 StreamDumper::StreamDumper(const std::string &file_name, int64_t bytes_to_dump ) :
     bytes_to_go( bytes_to_dump )
 {
-    file = fopen( file_name.c_str(), "wb" );
+    if ( file_name == std::string( "stdout" ) ) {
+        use_stdout = true;
+        file = stdout;
+    } else {
+        use_stdout = false;
+        file = fopen( file_name.c_str(), "wb" );
+    }
     if ( !file ) {
         throw std::runtime_error( "StreamDumper::StreamDumper() error opening file '" + file_name + "'" );
     }
@@ -16,8 +22,13 @@ StreamDumper::StreamDumper(const std::string &file_name, int64_t bytes_to_dump )
 
 StreamDumper::~StreamDumper() {
     if ( file ) {
-        fclose( file );
-        cout << "File was closed" << endl;
+        if ( use_stdout ) {
+            fflush( stdout );
+            cerr << "Stream was flushed" << endl;
+        } else {
+            fclose( file );
+            cerr << "File was closed" << endl;
+        }
     }
 }
 
@@ -53,6 +64,7 @@ void StreamDumper::HandleMessageAsync(std::vector<char> *message_ptr, const int 
         }
         bytes_to_go -= message_ptr->size();
     }
+
     if ( file ) {
         size_t wrote = fwrite( message_ptr->data(), 1, message_ptr->size(), file );
         if ( wrote != message_ptr->size() ) {

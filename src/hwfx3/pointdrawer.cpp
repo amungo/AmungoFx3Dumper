@@ -9,7 +9,7 @@ PointDrawer::PointDrawer( int milliseconds ) {
     drawer = std::thread([&](){
         while (drawing) {
             std::this_thread::sleep_for(std::chrono::milliseconds(milliseconds));
-            std::cout << ".";
+            std::cerr << ".";
         }
     } );
 

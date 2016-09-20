@@ -43,6 +43,7 @@ private:
     std::mutex mtx;
 
     int error_count = 0;
+    bool use_stdout = false;
 };
 
 #endif // STREAMERDUMPER_H
