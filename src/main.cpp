@@ -148,7 +148,7 @@ int main( int argn, const char** argv )
     } else {
         cerr << "Start testing USB transfer" << endl;
     }
-    int32_t iter_time_ms = 5000;
+    int32_t iter_time_ms = 2000;
     try {
 
         StreamDumper dumper( dumpfile, bytes_to_dump );
