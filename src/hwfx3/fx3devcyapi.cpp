@@ -132,6 +132,8 @@ void FX3DevCyAPI::changeHandler(DeviceDataHandlerIfce *handler) {
 }
 
 void FX3DevCyAPI::sendAttCommand5bits(uint32_t bits) {
+    std::lock_guard<std::mutex> critical_section(this->mtx);
+
     UCHAR buf[16];
     buf[0]=(UCHAR)(bits);
 
@@ -147,6 +149,8 @@ void FX3DevCyAPI::sendAttCommand5bits(uint32_t bits) {
 }
 
 fx3_dev_debug_info_t FX3DevCyAPI::getDebugInfoFromBoard(bool ask_speed_only) {
+    std::lock_guard<std::mutex> critical_section(this->mtx);
+
     if ( ask_speed_only ) {
         fx3_dev_debug_info_t info;
         info.status = FX3_ERR_OK;
@@ -192,6 +196,10 @@ fx3_dev_debug_info_t FX3DevCyAPI::getDebugInfoFromBoard(bool ask_speed_only) {
         last_overflow_count = info.overflows;
         return info;
     }
+}
+
+fx3_dev_err_t FX3DevCyAPI::getReceiverRegValue(uint8_t addr, uint8_t &value) {
+    return read16bitSPI( (uint8_t) addr, (uint8_t*)&value );
 }
 
 fx3_dev_err_t FX3DevCyAPI::scan(int &loadable_count , int &streamable_count) {
@@ -364,6 +372,8 @@ fx3_dev_err_t FX3DevCyAPI::loadAdditionalFirmware(const char* fw_name, uint32_t 
 }
 
 fx3_dev_err_t FX3DevCyAPI::send16bitSPI(unsigned char data, unsigned char addr) {
+    std::lock_guard<std::mutex> critical_section(this->mtx);
+
     UCHAR buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     buf[0] = (UCHAR)(data);
     buf[1] = (UCHAR)(addr);
@@ -387,6 +397,8 @@ fx3_dev_err_t FX3DevCyAPI::send16bitSPI(unsigned char data, unsigned char addr) 
 
 fx3_dev_err_t FX3DevCyAPI::read16bitSPI(unsigned char addr, unsigned char* data)
 {
+    std::lock_guard<std::mutex> critical_section(this->mtx);
+
     UCHAR buf[16];
     //addr |= 0x8000;
     buf[0] = (UCHAR)(*data);
@@ -420,6 +432,8 @@ fx3_dev_err_t FX3DevCyAPI::read16bitSPI(unsigned char addr, unsigned char* data)
 
 fx3_dev_err_t FX3DevCyAPI::send24bitSPI(unsigned char data, unsigned short addr)
 {
+    std::lock_guard<std::mutex> critical_section(this->mtx);
+
     if ( log ) fprintf( stderr, "[0x%03X] <= 0x%02X\n", addr, data );
 
     UCHAR buf[16];
@@ -448,6 +462,8 @@ fx3_dev_err_t FX3DevCyAPI::send24bitSPI(unsigned char data, unsigned short addr)
 
 fx3_dev_err_t FX3DevCyAPI::read24bitSPI(unsigned short addr, unsigned char* data)
 {
+    std::lock_guard<std::mutex> critical_section(this->mtx);
+
     UCHAR buf[16];
     //addr |= 0x8000;
     buf[0] = (UCHAR)(*data);

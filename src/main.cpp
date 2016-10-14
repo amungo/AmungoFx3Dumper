@@ -149,6 +149,8 @@ int main( int argn, const char** argv )
         cerr << "Start testing USB transfer" << endl;
     }
     int32_t iter_time_ms = 2000;
+    thread poller;
+    bool poller_running = true;
     try {
 
         StreamDumper dumper( dumpfile, bytes_to_dump );
@@ -157,6 +159,19 @@ int main( int argn, const char** argv )
         } else {
             dev->changeHandler(nullptr);
         }
+
+
+        poller = thread( [&]() {
+            while ( poller_running ) {
+                uint8_t val;
+                dev->getReceiverRegValue( 0x05, val );
+                dev->getReceiverRegValue( 0x07, val );
+                dev->getReceiverRegValue( 0x08, val );
+                cerr << endl;
+                this_thread::sleep_for(chrono::milliseconds(200));
+            }
+            cerr << "Poller thread finished" << endl;
+        });
 
         for ( ;; ) {
             if ( bytes_to_dump ) {

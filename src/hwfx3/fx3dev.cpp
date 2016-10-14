@@ -445,6 +445,11 @@ fx3_dev_debug_info_t FX3Dev::getDebugInfoFromBoard(bool ask_speed_only) {
     }
 }
 
+fx3_dev_err_t FX3Dev::getReceiverRegValue(uint8_t addr, uint8_t &value) {
+    value = 0x00;
+    return FX3_ERR_OK;
+}
+
 
 
 fx3_dev_err_t FX3Dev::send16bitToDeviceSynch( uint8_t byte0, uint8_t byte1 ) {

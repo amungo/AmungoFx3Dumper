@@ -1,6 +1,8 @@
 #ifndef FX3DEVIFCE
 #define FX3DEVIFCE
 
+#include <mutex>
+
 #include "fx3deverr.h"
 #include "fx3devdebuginfo.h"
 #include <stddef.h>
@@ -33,9 +35,11 @@ public:
     virtual void sendAttCommand5bits( uint32_t bits ) = 0;
 
     virtual fx3_dev_debug_info_t getDebugInfoFromBoard( bool ask_speed_only = false ) = 0;
+    virtual fx3_dev_err_t getReceiverRegValue( uint8_t addr, uint8_t& value ) = 0;
 
 protected:
     bool log;
+    std::mutex mtx;
 };
 
 #endif // FX3DEVIFCE
