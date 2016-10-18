@@ -177,6 +177,12 @@ int main( int argn, const char** argv )
                     do {
                         this_thread::sleep_for(chrono::microseconds(500));
                         dev->getReceiverRegValue( 0x05, rd_val[0] );
+                        if ( rd_val[0] == 0xff ) {
+                            cerr << "Critical error while registry reading. Is your device is broken?"
+                                 << "Try do detach submodule and attach it again" << endl;
+                            poller_running = false;
+                            break;
+                        }
                     } while ( ( rd_val[0] & 0x01 ) == 0x01 );
 
                     auto cur_time = chrono::system_clock::now();

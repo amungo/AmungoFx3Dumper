@@ -494,6 +494,7 @@ fx3_dev_err_t FX3Dev::readFromDeviceSynch(uint8_t addr, uint8_t *data) {
         fprintf( stderr, "FX3Dev::readFromDeviceSynch() error %d %s\n", res, libusb_error_name(res) );
         return FX3_ERR_REG_WRITE_FAIL;
     } else {
+        //fprintf( stderr, "FX3Dev::readFromDeviceSynch() [%02x]=%02x\n", addr, buf[0] );
         *data = buf[0];
     }
     return FX3_ERR_OK;
