@@ -197,7 +197,7 @@ int main( int argn, const char** argv )
                     fprintf( flog, "\n" );
                 }
                 //cerr << endl;
-                this_thread::sleep_for(chrono::milliseconds(20));
+                //this_thread::sleep_for(chrono::milliseconds(20));
             }
             fclose(flog);
             cerr << "Poller thread finished" << endl;
