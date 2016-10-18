@@ -36,6 +36,7 @@ public:
 
     virtual fx3_dev_debug_info_t getDebugInfoFromBoard( bool ask_speed_only = false ) = 0;
     virtual fx3_dev_err_t getReceiverRegValue( uint8_t addr, uint8_t& value ) = 0;
+    virtual fx3_dev_err_t putReceiverRegValue( uint8_t addr, uint8_t  value ) = 0;
 
 protected:
     bool log;

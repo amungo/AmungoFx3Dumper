@@ -199,7 +199,11 @@ fx3_dev_debug_info_t FX3DevCyAPI::getDebugInfoFromBoard(bool ask_speed_only) {
 }
 
 fx3_dev_err_t FX3DevCyAPI::getReceiverRegValue(uint8_t addr, uint8_t &value) {
-    return read16bitSPI( (uint8_t) addr, (uint8_t*)&value );
+    return read16bitSPI( addr, &value );
+}
+
+fx3_dev_err_t FX3DevCyAPI::putReceiverRegValue(uint8_t addr, uint8_t value) {
+    return send16bitSPI( value, addr );
 }
 
 fx3_dev_err_t FX3DevCyAPI::scan(int &loadable_count , int &streamable_count) {
@@ -404,7 +408,7 @@ fx3_dev_err_t FX3DevCyAPI::read16bitSPI(unsigned char addr, unsigned char* data)
     buf[0] = (UCHAR)(*data);
     buf[1] = (UCHAR)(addr|0x80);
 
-    if ( log ) fprintf( stderr, "FX3Dev::read16bitSPI() from  0x%02X\n", addr );
+    //if ( log ) fprintf( stderr, "FX3Dev::read16bitSPI() from  0x%02X\n", addr );
 
     CCyControlEndPoint* CtrlEndPt;
     CtrlEndPt = StartParams.USBDevice->ControlEndPt;
@@ -419,7 +423,7 @@ fx3_dev_err_t FX3DevCyAPI::read16bitSPI(unsigned char addr, unsigned char* data)
 
     *data = buf[0];
     if ( success ) {
-        fprintf( stderr, "[0x%02X] is 0x%02X\n", addr, *data );
+        //fprintf( stderr, "[0x%02X] is 0x%02X\n", addr, *data );
     } else {
         fprintf( stderr, "__error__ FX3Dev::read16bitSPI() FAILED\n" );
     }
@@ -434,7 +438,7 @@ fx3_dev_err_t FX3DevCyAPI::send24bitSPI(unsigned char data, unsigned short addr)
 {
     std::lock_guard<std::mutex> critical_section(this->mtx);
 
-    if ( log ) fprintf( stderr, "[0x%03X] <= 0x%02X\n", addr, data );
+    //if ( log ) fprintf( stderr, "[0x%03X] <= 0x%02X\n", addr, data );
 
     UCHAR buf[16];
     addr |= 0x8000;

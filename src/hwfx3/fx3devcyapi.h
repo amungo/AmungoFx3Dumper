@@ -62,6 +62,7 @@ public:
     void sendAttCommand5bits(uint32_t bits);
     fx3_dev_debug_info_t getDebugInfoFromBoard( bool ask_speed_only = false );
     fx3_dev_err_t getReceiverRegValue(uint8_t addr, uint8_t &value );
+    fx3_dev_err_t putReceiverRegValue( uint8_t addr, uint8_t  value );
 
 private:
     fx3_dev_err_t scan( int& loadable_count, int& streamable_count );

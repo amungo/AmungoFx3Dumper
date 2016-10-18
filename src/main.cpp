@@ -1,5 +1,6 @@
 #include <iostream>
 #include <chrono>
+#include <inttypes.h>
 
 #include "hwfx3/fx3dev.h"
 
@@ -98,7 +99,7 @@ int main( int argn, const char** argv )
     }
     cerr << "Device was inited." << endl << endl;
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(chrono::milliseconds(1000));
 
     cerr << "Determinating sample rate";
     if ( !seconds ) {
@@ -108,18 +109,18 @@ int main( int argn, const char** argv )
 
     dev->startRead(nullptr);
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(chrono::milliseconds(1000));
 
     dev->getDebugInfoFromBoard(false);
 
     double size_mb = 0.0;
     double phy_errs = 0;
     int sleep_ms = 200;
-    int iter_cnt = 20;
+    int iter_cnt = 5;
     double overall_seconds = ( sleep_ms * iter_cnt ) / 1000.0;
     fx3_dev_debug_info_t info = dev->getDebugInfoFromBoard();
     for ( int i = 0; i < iter_cnt; i++ ) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(sleep_ms));
+        std::this_thread::sleep_for(chrono::milliseconds(sleep_ms));
         info = dev->getDebugInfoFromBoard();
         //info.print();
         cerr << ".";
@@ -136,7 +137,7 @@ int main( int argn, const char** argv )
         cerr << "NOISE  LEVEL is  " << phy_errs / size_mb << " noisy packets per one megabyte" << endl;
     }
     cerr << endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    std::this_thread::sleep_for(chrono::milliseconds(1000));
 
 
     const int64_t bytes_per_sample = 1;
@@ -160,16 +161,45 @@ int main( int argn, const char** argv )
             dev->changeHandler(nullptr);
         }
 
+        auto start_time = chrono::system_clock::now();
+
 
         poller = thread( [&]() {
+            FILE* flog = fopen( "regdump.txt", "w" );
             while ( poller_running ) {
-                uint8_t val;
-                dev->getReceiverRegValue( 0x05, val );
-                dev->getReceiverRegValue( 0x07, val );
-                dev->getReceiverRegValue( 0x08, val );
-                cerr << endl;
-                this_thread::sleep_for(chrono::milliseconds(200));
+                uint8_t wr_val;
+                uint8_t rd_val[6];
+
+                for ( int ch = 0; ch < 4; ch++ ) {
+                    wr_val = ( ( ch << 4 ) | ( 0x0 << 1 ) | ( 0x1 << 0 ) );
+                    dev->putReceiverRegValue( 0x05, wr_val );
+
+                    do {
+                        this_thread::sleep_for(chrono::microseconds(500));
+                        dev->getReceiverRegValue( 0x05, rd_val[0] );
+                    } while ( ( rd_val[0] & 0x01 ) == 0x01 );
+
+                    auto cur_time = chrono::system_clock::now();
+                    auto time_from_start = cur_time - start_time;
+                    uint64_t ms_from_start = chrono::duration_cast<chrono::milliseconds>(time_from_start).count();
+
+                    dev->getReceiverRegValue( 0x06, rd_val[1] );
+                    dev->getReceiverRegValue( 0x07, rd_val[2] );
+                    dev->getReceiverRegValue( 0x08, rd_val[3] );
+                    dev->getReceiverRegValue( 0x09, rd_val[4] );
+                    dev->getReceiverRegValue( 0x0A, rd_val[5] );
+
+                    fprintf( flog, "%8" PRIu64 " ", ms_from_start);
+                    for ( int i = 0; i < 6; i++ ) {
+                        fprintf( flog, "%02X ", rd_val[i] );
+                        rd_val[i] = 0x00;
+                    }
+                    fprintf( flog, "\n" );
+                }
+                //cerr << endl;
+                this_thread::sleep_for(chrono::milliseconds(20));
             }
+            fclose(flog);
             cerr << "Poller thread finished" << endl;
         });
 
@@ -198,7 +228,7 @@ int main( int argn, const char** argv )
                 throw std::runtime_error( "### OVERFLOW DETECTED ON BOARD. DATA SKIP IS VERY POSSIBLE. EXITING ###" );
             }
 
-            std::this_thread::sleep_for(std::chrono::milliseconds(iter_time_ms));
+            std::this_thread::sleep_for(chrono::milliseconds(iter_time_ms));
         }
         cerr << endl;
 
@@ -206,6 +236,11 @@ int main( int argn, const char** argv )
     } catch ( std::exception& e ){
         cerr << endl << "Error!" << endl;
         cerr << e.what();
+    }
+
+    poller_running = false;
+    if ( poller.joinable() ) {
+        poller.join();
     }
 
     return 0;

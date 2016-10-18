@@ -56,6 +56,7 @@ public:
     void sendAttCommand5bits( uint32_t bits );
     fx3_dev_debug_info_t getDebugInfoFromBoard( bool ask_speed_only = false );
     fx3_dev_err_t getReceiverRegValue(uint8_t addr, uint8_t &value );
+    fx3_dev_err_t putReceiverRegValue( uint8_t addr, uint8_t  value );
     // ****
     
 private:    
@@ -66,6 +67,7 @@ private:
     static const uint32_t MAX_UPLOAD_BLOCK_SIZE8 = 2048; // For firmware flashing.
     static const uint8_t  CMD_FW_LOAD   = 0xA0;          // Vendor command for firmware flashing.
     static const uint8_t  CMD_REG_WRITE = 0xB3;          // Vendor command for register writing.
+    static const uint8_t  CMD_REG_READ  = 0xB5;          // Vendor command for register reading.
     static const uint8_t  CMD_READ_DBG  = 0xB4;          // Vendor command for reading debug data from device.
     
     //static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_NONE;
@@ -97,6 +99,7 @@ private:
     fx3_dev_err_t loadAdditionalFirmware( const char* fw_name, uint32_t stop_addr );
     
     fx3_dev_err_t send16bitToDeviceSynch( uint8_t byte0 , uint8_t byte1 );
+    fx3_dev_err_t readFromDeviceSynch( uint8_t addr , uint8_t* data );
     fx3_dev_err_t sendDataToDeviceASynch(uint8_t* data, uint32_t size8 );
     
 private:
