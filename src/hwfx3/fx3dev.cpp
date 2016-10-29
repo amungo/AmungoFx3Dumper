@@ -479,15 +479,16 @@ fx3_dev_err_t FX3Dev::send16bitToDeviceSynch( uint8_t byte0, uint8_t byte1 ) {
 }
 
 fx3_dev_err_t FX3Dev::readFromDeviceSynch(uint8_t addr, uint8_t *data) {
-    uint8_t bmRequestType = LIBUSB_RECIPIENT_DEVICE | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN;
-    uint8_t bRequest = CMD_REG_READ;
-    uint16_t wValue = 0;
-    uint16_t wIndex = 1;
-    uint32_t timeout_ms = DEV_UPLOAD_TIMEOUT_MS;
-
     uint8_t buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     buf[0] = *data;
     buf[1] = addr | 0x80;
+
+
+    uint8_t bmRequestType = LIBUSB_RECIPIENT_DEVICE | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN;
+    uint8_t bRequest = CMD_REG_READ;
+    uint16_t wValue = *data;
+    uint16_t wIndex = addr | 0x80;
+    uint32_t timeout_ms = DEV_UPLOAD_TIMEOUT_MS;
 
     int res = libusb_control_transfer( device_handle, bmRequestType, bRequest, wValue, wIndex, buf, 16, timeout_ms );
     if ( res != 16 ) {
