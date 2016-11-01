@@ -68,17 +68,8 @@ int main( int argn, const char** argv )
         cerr << "No dumping - just testing!" << endl;
     }
     cerr << "Using fx3 image from '" << fximg << "' and nt1065 config from '" << ntcfg << "'" << endl;
-    cerr << "Your OS use _" << ( useCypress ? "cypress" : "libusb" ) << "_ driver" << endl;
+    cerr << "You choose to use __" << ( useCypress ? "cypress" : "libusb" ) << "__ driver" << endl;
     cerr << "------------------------------" << endl;
-
-//    char answer = 'n';
-//    cerr << "Is this correct? [y/n] ";
-//    cin >> answer;
-
-//    if ( answer != 'y' ) {
-//        cerr << "Try to run with correct parameters" << endl;
-//        return 0;
-//    }
 
     cerr << "Wait while device is being initing..." << endl;
     FX3DevIfce* dev = nullptr;
@@ -90,6 +81,12 @@ int main( int argn, const char** argv )
         dev = new FX3Dev( 2 * 1024 * 1024, 7 );
     }
 #else
+    if ( useCypress ) {
+        cerr << endl
+             << "WARNING: you can't use cypress driver under Linux."
+             << " Please check if you use correct scripts!"
+             << endl;
+    }
     dev = new FX3Dev( 2 * 1024 * 1024, 7 );
 #endif
 
@@ -149,14 +146,15 @@ int main( int argn, const char** argv )
     } else {
         cerr << "Start testing USB transfer" << endl;
     }
+    StreamDumper* dumper = nullptr;
     int32_t iter_time_ms = 2000;
     thread poller;
     bool poller_running = true;
     try {
 
-        StreamDumper dumper( dumpfile, bytes_to_dump );
+        dumper = new StreamDumper( dumpfile, bytes_to_dump );
         if ( bytes_to_dump ) {
-            dev->changeHandler(&dumper);
+            dev->changeHandler(dumper);
         } else {
             dev->changeHandler(nullptr);
         }
@@ -170,7 +168,7 @@ int main( int argn, const char** argv )
                 uint8_t wr_val;
                 uint8_t rd_val[6];
 
-                for ( int ch = 0; ch < 4; ch++ ) {
+                for ( int ch = 0; ch < 4 && poller_running; ch++ ) {
                     wr_val = ( ( ch << 4 ) | ( 0x0 << 1 ) | ( 0x1 << 0 ) );
                     dev->putReceiverRegValue( 0x05, wr_val );
 
@@ -183,7 +181,7 @@ int main( int argn, const char** argv )
                             poller_running = false;
                             break;
                         }
-                    } while ( ( rd_val[0] & 0x01 ) == 0x01 );
+                    } while ( ( rd_val[0] & 0x01 ) == 0x01 && poller_running );
 
                     auto cur_time = chrono::system_clock::now();
                     auto time_from_start = cur_time - start_time;
@@ -216,14 +214,14 @@ int main( int argn, const char** argv )
                 cerr << endl << "Just testing. Press Ctrl-C to exit.  ";
             }
             if ( bytes_to_dump ) {
-                DumperStatus_e status = dumper.GetStatus();
+                DumperStatus_e status = dumper->GetStatus();
                 if ( status == DS_DONE ) {
                     break;
                 } else if ( status == DS_ERROR ) {
                     cerr << "Stop because of FILE IO errors" << endl;
                     break;
                 }
-                cerr << dumper.GetBytesToGo() / ( bytes_per_sample * CHIP_SR ) << " seconds to go. ";
+                cerr << dumper->GetBytesToGo() / ( bytes_per_sample * CHIP_SR ) << " seconds to go. ";
             }
 
             info = dev->getDebugInfoFromBoard();
@@ -243,6 +241,9 @@ int main( int argn, const char** argv )
         cerr << endl << "Error!" << endl;
         cerr << e.what();
     }
+
+    dev->changeHandler(nullptr);
+    delete dumper;
 
     poller_running = false;
     if ( poller.joinable() ) {
