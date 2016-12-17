@@ -32,5 +32,5 @@ The program dumps all data from a FX3 board without any changes. Usually the for
  * 10b -> -1
  * 11b -> -3
 
-You can use AmgExtract to extracting several channels from output file and converting
+You can use AmgExtract to extract several channels from output file and converting
 data to usual _signed char_ format. AmgExtract is located here: https://github.com/amungo/AmgExtract
