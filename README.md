@@ -19,3 +19,18 @@ _DRV_TYPE_   - driver installed in your system. Use 'cypress' or 'libusb'
  * AmungoFx3Dumper AmungoItsFx3Firmware.img  nt1065.hex  dump4ch.bin  60  cypress
 * dumping signal non-stop to stdout:
  * AmungoFx3Dumper AmungoItsFx3Firmware.img  nt1065.hex  stdout  inf  libusb
+
+## File format
+The program dumps all data from a FX3 board without any changes. Usually the format is:
+
+* 4 channels
+* 2 bits per sample per channel
+* Overall 8 bits (1 byte) per one sample for all channels
+* Decode table is
+ * 00b ->  1
+ * 01b ->  3
+ * 10b -> -1
+ * 11b -> -3
+
+You can use AmgExtract to extracting several channels from output file and converting
+data to usual _signed char_ format. AmgExtract is located here: https://github.com/amungo/AmgExtract
