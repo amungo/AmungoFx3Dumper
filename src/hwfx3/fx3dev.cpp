@@ -3,6 +3,7 @@
 #include "fx3dev.h"
 #include "HexParser.h"
 #include "pointdrawer.h"
+#include "host_commands.h"
 
 FX3Dev::FX3Dev( size_t one_block_size8, uint32_t dev_buffers_count ) :
     ctx( NULL ),
@@ -38,9 +39,22 @@ FX3Dev::FX3Dev( size_t one_block_size8, uint32_t dev_buffers_count ) :
 }
 
 FX3Dev::~FX3Dev() {
+    stopRead();
+
     if ( write_transfer ) {
         libusb_cancel_transfer(write_transfer);
         libusb_free_transfer(write_transfer);
+    }
+
+    for ( int i = 0; i < 10; i++ ) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(DEV_DOWNLOAD_TIMEOUT_MS/10));
+        fprintf(stderr, ".");
+    }
+    fprintf( stderr, "\nReseting chip\n" );
+    if ( reset() == FX3_ERR_OK ) {
+        fprintf( stderr, "Sucess!\n" );
+    } else {
+        fprintf( stderr, "Something wrong. Do you use last firmware?\n" );
     }
     
     if ( device_handle ) {
@@ -141,6 +155,8 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char
         fprintf( stderr, "FX3Dev::Init() __error__ libusb_claim_interface failed %d %s\n", ires, libusb_error_name( ires ) );
         return FX3_ERR_USB_INIT_FAIL;
     }
+
+    print_version();
     
     return FX3_ERR_OK;
 }
@@ -420,7 +436,7 @@ fx3_dev_debug_info_t FX3Dev::getDebugInfoFromBoard(bool ask_speed_only) {
         uint32_t len32 = 8;
         uint32_t* ans = new uint32_t[ len32 ];
         std::fill( &ans[0], &ans[len32-1], 0 );
-        fx3_dev_err_t eres = txControlFromDevice( (uint8_t*)ans, len32 * sizeof( uint32_t ), CMD_READ_DBG, 0, 1 );
+        fx3_dev_err_t eres = txControlFromDevice( (uint8_t*)ans, len32 * sizeof( uint32_t ), CMD_READ_DEBUG_INFO, 0, 1 );
         if ( eres != FX3_ERR_OK ) {
             fprintf( stderr, "FX3Dev::getDebugInfoFromBoard() __error__  %d %s\n", eres, fx3_get_error_string( eres ) );
         }
@@ -452,6 +468,47 @@ fx3_dev_err_t FX3Dev::getReceiverRegValue(uint8_t addr, uint8_t &value) {
 
 fx3_dev_err_t FX3Dev::putReceiverRegValue(uint8_t addr, uint8_t value) {
     send16bitToDeviceSynch( value, addr );
+    return FX3_ERR_OK;
+}
+
+fx3_dev_err_t FX3Dev::reset() {
+    uint8_t bmRequestType = LIBUSB_RECIPIENT_DEVICE | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_OUT;
+    uint8_t bRequest = CMD_CYPRESS_RESET;
+    uint16_t wValue = 0;
+    uint16_t wIndex = 1;
+    uint32_t timeout_ms = DEV_UPLOAD_TIMEOUT_MS;
+
+    uint8_t data[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+    int res = libusb_control_transfer( device_handle, bmRequestType, bRequest, wValue, wIndex, data, 16, timeout_ms );
+    if ( res != 16 ) {
+        fprintf( stderr, "FX3Dev::reset() send error %d %s\n", res, libusb_error_name(res) );
+        return FX3_ERR_REG_WRITE_FAIL;
+    }
+    return FX3_ERR_OK;
+}
+
+fx3_dev_err_t FX3Dev::print_version() {
+    uint8_t bmRequestType = LIBUSB_RECIPIENT_DEVICE | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN;
+    uint8_t bRequest = CMD_GET_VERSION;
+    uint16_t wValue = 0;
+    uint16_t wIndex = 1;
+    uint32_t timeout_ms = DEV_UPLOAD_TIMEOUT_MS;
+
+    FirmwareDescription_t desc;
+    uint16_t len = (uint16_t)sizeof(desc);
+
+    int res = libusb_control_transfer(
+                device_handle, bmRequestType, bRequest, wValue, wIndex,
+                (unsigned char *)&desc, len, timeout_ms );
+
+    if ( res != len ) {
+        fprintf( stderr, "FX3Dev::print_version() error %d %s\n", res, libusb_error_name(res) );
+        return FX3_ERR_REG_WRITE_FAIL;
+    } else {
+        fprintf( stderr, "\n---------------------------------"
+                         "\nFirmware VERSION: %08X\n", desc.version );
+    }
     return FX3_ERR_OK;
 }
 

@@ -58,6 +58,9 @@ public:
     fx3_dev_err_t getReceiverRegValue(uint8_t addr, uint8_t &value );
     fx3_dev_err_t putReceiverRegValue( uint8_t addr, uint8_t  value );
     // ****
+
+    fx3_dev_err_t reset();
+    fx3_dev_err_t print_version();
     
 private:    
     static const uint32_t VENDOR_ID = 0x04b4;
@@ -66,9 +69,6 @@ private:
     
     static const uint32_t MAX_UPLOAD_BLOCK_SIZE8 = 2048; // For firmware flashing.
     static const uint8_t  CMD_FW_LOAD   = 0xA0;          // Vendor command for firmware flashing.
-    static const uint8_t  CMD_REG_WRITE = 0xB3;          // Vendor command for register writing.
-    static const uint8_t  CMD_REG_READ  = 0xB5;          // Vendor command for register reading.
-    static const uint8_t  CMD_READ_DBG  = 0xB4;          // Vendor command for reading debug data from device.
     
     //static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_NONE;
     static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_ERROR;
@@ -78,7 +78,7 @@ private:
     
     static const int32_t  PAUSE_AFTER_FLASH_SECONDS = 2;    // Seconds to wait after firmware is loaded.
     static const uint32_t DEV_UPLOAD_TIMEOUT_MS     = 1000; // Timeout for uploading one block of firmware. Block size is less or equal to MAX_UPLOAD_BLOCK_SIZE8 bytes.
-    static const uint32_t DEV_DOWNLOAD_TIMEOUT_MS   = 5000; // Timeout for downloading one block of data from device. One block size is half_full_size8 (set in constructor).
+    static const uint32_t DEV_DOWNLOAD_TIMEOUT_MS   = 1000; // Timeout for downloading one block of data from device. One block size is half_full_size8 (set in constructor).
     
     static const uint32_t ADD_FW_LOAD_PAUSE_MS      = 20;   // Pause used for loading additional fw (in ms)
     static const uint32_t FW_LOAD_TRY_COUNT         = 10;   // Try count for loading firmware
