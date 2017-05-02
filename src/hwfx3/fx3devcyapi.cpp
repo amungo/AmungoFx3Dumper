@@ -3,6 +3,7 @@
 
 #include "pointdrawer.h"
 #include "HexParser.h"
+#include "host_commands.h"
 
 FX3DevCyAPI::FX3DevCyAPI() :
     data_handler( NULL ),
@@ -13,7 +14,19 @@ FX3DevCyAPI::FX3DevCyAPI() :
 }
 
 FX3DevCyAPI::~FX3DevCyAPI() {
-
+    stopRead();
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    fprintf( stderr, "Reseting chip\n" );
+    if ( reset() == FX3_ERR_OK ) {
+        fprintf( stderr, "Sucess! Wait a second\n" );
+        for ( int i = 0; i < 12; i++ ) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            fprintf( stderr, "." );
+        }
+        fprintf( stderr, "reinit done\n" );
+    } else {
+        fprintf( stderr, "Something wrong. Do you use last firmware?\n" );
+    }
 }
 
 fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additionalFirmwareFileName) {
@@ -106,6 +119,8 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
         if ( log ) fprintf( stderr, "FX3DevCyAPI::Init() EndPoint[%d], Attr=%d, In=%d, MaxPktSize=%d, MaxBurst=%d, Infce=%d, Addr=%d\n",
                  i, Attr, In, MaxPktSize, MaxBurst, Interface, Address);
     }
+
+    print_version();
 
     return res;
 }
@@ -204,6 +219,49 @@ fx3_dev_err_t FX3DevCyAPI::getReceiverRegValue(uint8_t addr, uint8_t &value) {
 
 fx3_dev_err_t FX3DevCyAPI::putReceiverRegValue(uint8_t addr, uint8_t value) {
     return send16bitSPI( value, addr );
+}
+
+fx3_dev_err_t FX3DevCyAPI::reset() {
+    UCHAR buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    LONG len = 16;
+
+    CCyControlEndPoint* CtrlEndPt;
+    CtrlEndPt = StartParams.USBDevice->ControlEndPt;
+    CtrlEndPt->Target = TGT_DEVICE;
+    CtrlEndPt->ReqType = REQ_VENDOR;
+    CtrlEndPt->Direction = DIR_TO_DEVICE;
+    CtrlEndPt->ReqCode = CMD_CYPRESS_RESET;
+    CtrlEndPt->Value = 0;
+    CtrlEndPt->Index = 1;
+    int success = CtrlEndPt->XferData(&buf[0], len);
+
+    return success ? FX3_ERR_OK : FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3DevCyAPI::print_version() {
+    //if ( log ) fprintf( stderr, "FX3Dev::read16bitSPI() from  0x%02X\n", addr );
+
+    CCyControlEndPoint* CtrlEndPt;
+    CtrlEndPt = StartParams.USBDevice->ControlEndPt;
+    CtrlEndPt->Target = TGT_DEVICE;
+    CtrlEndPt->ReqType = REQ_VENDOR;
+    CtrlEndPt->Direction = DIR_FROM_DEVICE;
+    CtrlEndPt->ReqCode = CMD_GET_VERSION;
+    CtrlEndPt->Value = 0;
+    CtrlEndPt->Index = 1;
+
+    FirmwareDescription_t desc;
+    LONG len = (LONG)sizeof(desc);
+    int success = CtrlEndPt->XferData((UCHAR*)&desc, len);
+
+    if ( success ) {
+        fprintf( stderr, "\n---------------------------------"
+                         "\nFirmware VERSION: %08X\n", desc.version );
+    } else {
+        fprintf( stderr, "__error__ FX3Dev::print_version() FAILED\n" );
+    }
+
+    return success ? FX3_ERR_OK : FX3_ERR_CTRL_TX_FAIL;
 }
 
 fx3_dev_err_t FX3DevCyAPI::scan(int &loadable_count , int &streamable_count) {

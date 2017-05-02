@@ -29,7 +29,8 @@ HEADERS += \
     sys/NamedClass.h \
     sys/Runnable.h \
     sys/SingleEvent.h \
-    hwfx3/pointdrawer.h
+    hwfx3/pointdrawer.h \
+    hwfx3/host_commands.h
 
 win32: SOURCES += \
         hwfx3/fx3devcyapi.cpp

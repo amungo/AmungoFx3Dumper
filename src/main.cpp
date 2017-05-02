@@ -250,6 +250,8 @@ int main( int argn, const char** argv )
         poller.join();
     }
 
+    delete dev;
+
     return 0;
 }
 
