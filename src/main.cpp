@@ -106,6 +106,12 @@ int main( int argn, const char** argv )
 
     dev->startRead(nullptr);
 
+    // This is temporary workaround for strange bug of 'odd launch'
+    std::this_thread::sleep_for(chrono::milliseconds(100));
+    dev->stopRead();
+    std::this_thread::sleep_for(chrono::milliseconds(100));
+    dev->startRead(nullptr);
+
     std::this_thread::sleep_for(chrono::milliseconds(1000));
 
     dev->getDebugInfoFromBoard(false);
