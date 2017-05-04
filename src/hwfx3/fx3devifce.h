@@ -38,8 +38,8 @@ public:
     virtual fx3_dev_err_t getReceiverRegValue( uint8_t addr, uint8_t& value ) = 0;
     virtual fx3_dev_err_t putReceiverRegValue( uint8_t addr, uint8_t  value ) = 0;
 
-protected:
     bool log;
+protected:
     std::mutex mtx;
 };
 

@@ -26,6 +26,7 @@ FX3DevCyAPI::~FX3DevCyAPI() {
         fprintf( stderr, "reinit done\n" );
     } else {
         fprintf( stderr, "Something wrong. Do you use last firmware?\n" );
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
@@ -96,13 +97,8 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
     if ( additionalFirmwareFileName != NULL ) {
         if ( additionalFirmwareFileName[ 0 ] != 0 ) {
 
-            PointDrawer drawer;
+            PointDrawer drawer(100);
 
-            res = loadAdditionalFirmware( additionalFirmwareFileName, 112 );
-            if ( res != FX3_ERR_OK ) {
-                fprintf( stderr, "FX3DevCyAPI::Init() __error__ loadAdditionalFirmware %d %s\n", res, fx3_get_error_string( res ) );
-                return res;
-            }
             res = loadAdditionalFirmware( additionalFirmwareFileName, 48 );
             if ( res != FX3_ERR_OK ) {
                 fprintf( stderr, "FX3DevCyAPI::Init() __error__ loadAdditionalFirmware %d %s\n", res, fx3_get_error_string( res ) );
@@ -133,11 +129,11 @@ void FX3DevCyAPI::startRead(DeviceDataHandlerIfce *handler) {
 }
 
 void FX3DevCyAPI::stopRead() {
-    if( StartParams.bStreaming ) {
-        StartParams.bStreaming = false;
+    StartParams.bStreaming = false;
+    if ( xfer_thread.joinable() ) {
         xfer_thread.join();
-        data_handler = NULL;
     }
+    changeHandler( NULL );
     if ( log ) fprintf( stderr, "FX3DevCyAPI::stopRead() all done!\n" );
 }
 
@@ -556,7 +552,7 @@ fx3_dev_err_t FX3DevCyAPI::read24bitSPI(unsigned short addr, unsigned char* data
 
 
 void FX3DevCyAPI::xfer_loop() {
-    //fprintf( stderr, "FX3DevCyAPI::xfer_loop() started\n" );
+    if ( log ) fprintf( stderr, "FX3DevCyAPI::xfer_loop() started\n" );
     StartDataTransferParams* Params = &StartParams;
     
     
@@ -600,7 +596,7 @@ void FX3DevCyAPI::xfer_loop() {
         isoPktInfos[i]    = new CCyIsoPktInfo[Params->PPX];
         inOvLap[i].hEvent = CreateEvent(NULL, false, false, NULL);
 
-        memset(buffers[i],0xEF,len);
+        memset(buffers[i],0x0A,len);
     }
 
     // Queue-up the first batch of transfer requests
@@ -609,6 +605,7 @@ void FX3DevCyAPI::xfer_loop() {
         contexts[i] = Params->EndPt->BeginDataXfer(buffers[i], len, &inOvLap[i]);
         if (Params->EndPt->NtStatus || Params->EndPt->UsbdStatus) // BeginDataXfer failed
         {
+            fprintf( stderr, "__error__ FX3DevCyAPI::xfer_loop() BeginDataXfer (inital) failed, i=%d\n", i );
             AbortXferLoop(Params, i+1, buffers,isoPktInfos,contexts,inOvLap);
             return;
         }
@@ -677,6 +674,7 @@ void FX3DevCyAPI::xfer_loop() {
         contexts[i] = Params->EndPt->BeginDataXfer(buffers[i], len, &inOvLap[i]);
         if (Params->EndPt->NtStatus || Params->EndPt->UsbdStatus) // BeginDataXfer failed
         {
+            fprintf( stderr, "__error__ FX3DevCyAPI::xfer_loop() BeginDataXfer (continue) failed, i=%d\n", i );
             AbortXferLoop(Params, Params->QueueSize,buffers,isoPktInfos,contexts,inOvLap);
             return;
         }

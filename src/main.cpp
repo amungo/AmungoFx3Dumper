@@ -95,6 +95,7 @@ int main( int argn, const char** argv )
         return -1;
     }
     cerr << "Device was inited." << endl << endl;
+    dev->log = false;
 
     std::this_thread::sleep_for(chrono::milliseconds(1000));
 
@@ -114,17 +115,17 @@ int main( int argn, const char** argv )
 
     std::this_thread::sleep_for(chrono::milliseconds(1000));
 
-    dev->getDebugInfoFromBoard(false);
+    dev->getDebugInfoFromBoard(true);
 
     double size_mb = 0.0;
     double phy_errs = 0;
     int sleep_ms = 200;
     int iter_cnt = 5;
     double overall_seconds = ( sleep_ms * iter_cnt ) / 1000.0;
-    fx3_dev_debug_info_t info = dev->getDebugInfoFromBoard();
+    fx3_dev_debug_info_t info = dev->getDebugInfoFromBoard(true);
     for ( int i = 0; i < iter_cnt; i++ ) {
         std::this_thread::sleep_for(chrono::milliseconds(sleep_ms));
-        info = dev->getDebugInfoFromBoard();
+        info = dev->getDebugInfoFromBoard(true);
         //info.print();
         cerr << ".";
         size_mb += info.size_tx_mb_inc;
@@ -156,6 +157,7 @@ int main( int argn, const char** argv )
     int32_t iter_time_ms = 2000;
     thread poller;
     bool poller_running = true;
+    bool device_is_ok = true;
     try {
 
         dumper = new StreamDumper( dumpfile, bytes_to_dump );
@@ -170,34 +172,53 @@ int main( int argn, const char** argv )
 
         poller = thread( [&]() {
             FILE* flog = fopen( "regdump.txt", "w" );
-            while ( poller_running ) {
+            while ( poller_running && device_is_ok ) {
                 uint8_t wr_val;
                 uint8_t rd_val[6];
 
                 for ( int ch = 0; ch < 4 && poller_running; ch++ ) {
                     wr_val = ( ( ch << 4 ) | ( 0x0 << 1 ) | ( 0x1 << 0 ) );
-                    dev->putReceiverRegValue( 0x05, wr_val );
+                    fx3_dev_err_t res = FX3_ERR_OK;
+                    res = dev->putReceiverRegValue( 0x05, wr_val );
+                    if ( res != FX3_ERR_OK ) {
+                        cerr << "dev->putReceiverRegValue( 0x05, 0x" << std::hex << (int)wr_val << " ) failed" << endl;
+                        this_thread::sleep_for(chrono::milliseconds(100));
+                        poller_running = false;
+                        device_is_ok = false;
+                        break;
+                    }
 
                     do {
                         this_thread::sleep_for(chrono::microseconds(500));
-                        dev->getReceiverRegValue( 0x05, rd_val[0] );
-                        if ( rd_val[0] == 0xff ) {
-                            cerr << "Critical error while registry reading. Is your device is broken?"
+                        res = dev->getReceiverRegValue( 0x05, rd_val[0] );
+                        if ( rd_val[0] == 0xff || res != FX3_ERR_OK ) {
+                            cerr << "Critical error while registry reading. Is your device is broken?" << endl
                                  << "Try do detach submodule and attach it again" << endl;
+                            this_thread::sleep_for(chrono::milliseconds(100));
                             poller_running = false;
+                            device_is_ok = false;
                             break;
                         }
-                    } while ( ( rd_val[0] & 0x01 ) == 0x01 && poller_running );
+                    } while ( ( rd_val[0] & 0x01 ) == 0x01 && res == FX3_ERR_OK && poller_running );
 
                     auto cur_time = chrono::system_clock::now();
                     auto time_from_start = cur_time - start_time;
                     uint64_t ms_from_start = chrono::duration_cast<chrono::milliseconds>(time_from_start).count();
 
-                    dev->getReceiverRegValue( 0x06, rd_val[1] );
-                    dev->getReceiverRegValue( 0x07, rd_val[2] );
-                    dev->getReceiverRegValue( 0x08, rd_val[3] );
-                    dev->getReceiverRegValue( 0x09, rd_val[4] );
-                    dev->getReceiverRegValue( 0x0A, rd_val[5] );
+                    if ( res == FX3_ERR_OK ) res = dev->getReceiverRegValue( 0x06, rd_val[1] );
+                    if ( res == FX3_ERR_OK ) res = dev->getReceiverRegValue( 0x07, rd_val[2] );
+                    if ( res == FX3_ERR_OK ) res = dev->getReceiverRegValue( 0x08, rd_val[3] );
+                    if ( res == FX3_ERR_OK ) res = dev->getReceiverRegValue( 0x09, rd_val[4] );
+                    if ( res == FX3_ERR_OK ) res = dev->getReceiverRegValue( 0x0A, rd_val[5] );
+
+                    if ( res != FX3_ERR_OK ) {
+                        cerr << "Critical error while registry reading. Is your device is broken?" << endl
+                             << "Try do detach submodule and attach it again" << endl;
+                        this_thread::sleep_for(chrono::milliseconds(100));
+                        poller_running = false;
+                        device_is_ok = false;
+                        break;
+                    }
 
                     fprintf( flog, "%8" PRIu64 " ", ms_from_start);
                     for ( int i = 0; i < 6; i++ ) {
@@ -206,14 +227,13 @@ int main( int argn, const char** argv )
                     }
                     fprintf( flog, "\n" );
                 }
-                //cerr << endl;
-                //this_thread::sleep_for(chrono::milliseconds(20));
+
             }
             fclose(flog);
             cerr << "Poller thread finished" << endl;
         });
 
-        for ( ;; ) {
+        while ( device_is_ok ) {
             if ( bytes_to_dump ) {
                 cerr << "\r";
             } else {
@@ -230,7 +250,7 @@ int main( int argn, const char** argv )
                 cerr << dumper->GetBytesToGo() / ( bytes_per_sample * CHIP_SR ) << " seconds to go. ";
             }
 
-            info = dev->getDebugInfoFromBoard();
+            info = dev->getDebugInfoFromBoard(true);
             info.overflows -= overs_cnt_at_start;
             cerr << "Overflows count: " << info.overflows << "    ";
 
@@ -249,7 +269,6 @@ int main( int argn, const char** argv )
     }
 
     dev->changeHandler(nullptr);
-    delete dumper;
 
     poller_running = false;
     if ( poller.joinable() ) {
@@ -257,6 +276,7 @@ int main( int argn, const char** argv )
     }
 
     delete dev;
+    delete dumper;
 
     return 0;
 }
