@@ -90,7 +90,14 @@ int main( int argn, const char** argv )
     dev = new FX3Dev( 2 * 1024 * 1024, 7 );
 #endif
 
-    if ( dev->init(fximg.c_str(), ntcfg.c_str() ) != FX3_ERR_OK ) {
+    const char* ntcfgcstr = ntcfg.c_str();
+    bool no_nt_mode = false;
+    if ( ntcfg == string("none") ) {
+        ntcfgcstr = nullptr;
+        no_nt_mode = true;
+    }
+
+    if ( dev->init(fximg.c_str(), ntcfgcstr ) != FX3_ERR_OK ) {
         cerr << endl << "Problems with hardware or driver type" << endl;
         return -1;
     }
@@ -171,6 +178,9 @@ int main( int argn, const char** argv )
 
 
         poller = thread( [&]() {
+            if ( no_nt_mode ) {
+                return;
+            }
             FILE* flog = fopen( "regdump.txt", "w" );
             while ( poller_running && device_is_ok ) {
                 uint8_t wr_val;
