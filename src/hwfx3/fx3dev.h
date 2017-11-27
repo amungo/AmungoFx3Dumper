@@ -63,25 +63,25 @@ public:
     fx3_dev_err_t print_version();
     
 private:    
-    static const uint32_t VENDOR_ID = 0x04b4;
-    static const uint32_t DEV_PID_NO_FW_NEEDED = 0x00f1; // PID of device with already flashed firmware
-    static const uint32_t DEV_PID_FOR_FW_LOAD  = 0x00f3; // PID of device without flashed firmware. This device must be flashed before use.
+    const uint32_t VENDOR_ID = 0x04b4;
+    const uint32_t DEV_PID_NO_FW_NEEDED = 0x00f1; // PID of device with already flashed firmware
+    const uint32_t DEV_PID_FOR_FW_LOAD  = 0x00f3; // PID of device without flashed firmware. This device must be flashed before use.
     
-    static const uint32_t MAX_UPLOAD_BLOCK_SIZE8 = 2048; // For firmware flashing.
-    static const uint8_t  CMD_FW_LOAD   = 0xA0;          // Vendor command for firmware flashing.
+    const uint32_t MAX_UPLOAD_BLOCK_SIZE8 = 2048; // For firmware flashing.
+    const uint8_t  CMD_FW_LOAD   = 0xA0;          // Vendor command for firmware flashing.
     
-    //static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_NONE;
-    static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_ERROR;
-    //static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_WARNING;
-    //static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_INFO;
-    //static const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_DEBUG;
+    //const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_NONE;
+    const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_ERROR;
+    //const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_WARNING;
+    //const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_INFO;
+    //const int32_t  FX3_DEBUG_LEVEL_DEFAULT   = LIBUSB_LOG_LEVEL_DEBUG;
     
-    static const int32_t  PAUSE_AFTER_FLASH_SECONDS = 2;    // Seconds to wait after firmware is loaded.
-    static const uint32_t DEV_UPLOAD_TIMEOUT_MS     = 1000; // Timeout for uploading one block of firmware. Block size is less or equal to MAX_UPLOAD_BLOCK_SIZE8 bytes.
-    static const uint32_t DEV_DOWNLOAD_TIMEOUT_MS   = 1000; // Timeout for downloading one block of data from device. One block size is half_full_size8 (set in constructor).
+    const int32_t  PAUSE_AFTER_FLASH_SECONDS = 2;    // Seconds to wait after firmware is loaded.
+    const uint32_t DEV_UPLOAD_TIMEOUT_MS     = 1000; // Timeout for uploading one block of firmware. Block size is less or equal to MAX_UPLOAD_BLOCK_SIZE8 bytes.
+    const uint32_t DEV_DOWNLOAD_TIMEOUT_MS   = 1000; // Timeout for downloading one block of data from device. One block size is half_full_size8 (set in constructor).
     
-    static const uint32_t ADD_FW_LOAD_PAUSE_MS      = 20;   // Pause used for loading additional fw (in ms)
-    static const uint32_t FW_LOAD_TRY_COUNT         = 10;   // Try count for loading firmware
+    const uint32_t ADD_FW_LOAD_PAUSE_MS      = 20;   // Pause used for loading additional fw (in ms)
+    const uint32_t FW_LOAD_TRY_COUNT         = 10;   // Try count for loading firmware
 
     
 private:
