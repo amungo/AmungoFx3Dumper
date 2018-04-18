@@ -49,7 +49,8 @@ public:
     virtual ~FX3Dev();
 
     // **** overrides FX3DevIfce
-    fx3_dev_err_t init( const char* firmwareFileName = NULL, const char* additionalFirmwareFileName = NULL );
+    virtual fx3_dev_err_t init( const char* firmwareFileName = NULL, const char* additionalFirmwareFileName = NULL );
+    virtual fx3_dev_err_t init_fpga(const char* algoFileName, const char* dataFileName);
     void startRead( DeviceDataHandlerIfce* handler );
     void stopRead();
     void changeHandler(DeviceDataHandlerIfce *handler);
@@ -61,6 +62,21 @@ public:
 
     fx3_dev_err_t reset();
     fx3_dev_err_t print_version();
+
+     //----------------------- Lattice control ------------------
+    virtual fx3_dev_err_t send16bitSPI_ECP5(uint8_t addr, uint8_t data);
+    virtual fx3_dev_err_t sendECP5(uint8_t* buf, long len);
+    virtual fx3_dev_err_t recvECP5(uint8_t* buf, long len);
+    virtual fx3_dev_err_t resetECP5();
+    virtual fx3_dev_err_t checkECP5();
+    virtual fx3_dev_err_t csonECP5();
+    virtual fx3_dev_err_t csoffECP5();
+    virtual fx3_dev_err_t send24bitSPI8bit(unsigned int data);
+    virtual fx3_dev_err_t device_start();
+    virtual fx3_dev_err_t device_stop();
+    virtual fx3_dev_err_t device_reset();
+    virtual fx3_dev_err_t reset_nt1065();
+    virtual fx3_dev_err_t load1065Ctrlfile(const char* fwFileName, int lastaddr);
     
 private:    
     const uint32_t VENDOR_ID = 0x04b4;

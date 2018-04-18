@@ -11,7 +11,10 @@ SOURCES += main.cpp \
     processors/streamdumper.cpp \
     sys/NamedClass.cpp \
     sys/Runnable.cpp \
-    hwfx3/pointdrawer.cpp
+    hwfx3/pointdrawer.cpp \
+    hwfx3/lattice/lfe5u_core.cpp \
+    hwfx3/lattice/lfe5u_hardware.cpp \
+    hwfx3/lattice/lfe5u_util.cpp
 
 HEADERS += \
     hwfx3/fx3dev.h \
@@ -30,7 +33,12 @@ HEADERS += \
     sys/Runnable.h \
     sys/SingleEvent.h \
     hwfx3/pointdrawer.h \
-    hwfx3/host_commands.h
+    hwfx3/host_commands.h \
+    hwfx3/lattice/lfe5u_core.h \
+    hwfx3/lattice/lfe5u_debug.h \
+    hwfx3/lattice/lfe5u_hardware.h \
+    hwfx3/lattice/lfe5u_opcode.h \
+    hwfx3/lattice/lfe5u_util.h
 
 win32: SOURCES += \
         hwfx3/fx3devcyapi.cpp

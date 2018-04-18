@@ -151,8 +151,15 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char
         return FX3_ERR_USB_INIT_FAIL;
     }
 
+#if 0
     print_version();
+#endif
     
+    return FX3_ERR_OK;
+}
+
+fx3_dev_err_t FX3Dev::init_fpga(const char* algoFileName, const char* dataFileName)
+{
     return FX3_ERR_OK;
 }
 
@@ -507,6 +514,73 @@ fx3_dev_err_t FX3Dev::print_version() {
     return FX3_ERR_OK;
 }
 
+// -------------------------- Lattice control -------------------------------
+fx3_dev_err_t FX3Dev::send16bitSPI_ECP5(uint8_t addr, uint8_t data)
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::sendECP5(uint8_t* buf, long len)
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::recvECP5(uint8_t* buf, long len)
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::resetECP5()
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::checkECP5()
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::csonECP5()
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::csoffECP5()
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::send24bitSPI8bit(unsigned int data)
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::device_start()
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::device_stop()
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::device_reset()
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::reset_nt1065()
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3Dev::load1065Ctrlfile(const char* fwFileName, int lastaddr)
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+// ---------------------------------------------------------------------------
 
 
 fx3_dev_err_t FX3Dev::send16bitToDeviceSynch( uint8_t byte0, uint8_t byte1 ) {

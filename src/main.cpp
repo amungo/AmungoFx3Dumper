@@ -20,11 +20,13 @@ int main( int argn, const char** argv )
 #endif
 
     cerr << "*** Amungo's dumper for nut4nt board ***" << endl << endl;
-    if ( argn != 6 ) {
+    if ( argn != 8 ) {
         cerr << "Usage: "
              << "AmungoFx3Dumper"     << " "
              << "FX3_IMAGE"           << " "
              << "NT1065_CFG"          << " "
+             << "Lattice_ALG"         << " "
+             << "Lattice_DATA"        << " "
              << " OUT_FILE | stdout " << " "
              << " SECONDS | inf"      << " "
              << "cypress | libusb"
@@ -45,17 +47,19 @@ int main( int argn, const char** argv )
 
     std::string fximg( argv[1] );
     std::string ntcfg( argv[2] );
-    std::string dumpfile( argv[3] );
+    std::string ecp5alg( argv[3] );
+    std::string ecp5data( argv[4] );
+    std::string dumpfile( argv[5] );
 
     double seconds = 0.0;
     const double INF_SECONDS = 10.0 * 365.0 * 24.0 * 60.0 * 60.0;
     if ( string(argv[4]) == string("inf") ) {
         seconds = INF_SECONDS;
     } else {
-        seconds = atof( argv[4] );
+        seconds = atof( argv[6] );
     }
 
-    std::string driver( argv[5] );
+    std::string driver( argv[7] );
 
     bool useCypress = ( driver == string( "cypress" ) );
 
@@ -68,6 +72,7 @@ int main( int argn, const char** argv )
         cerr << "No dumping - just testing!" << endl;
     }
     cerr << "Using fx3 image from '" << fximg << "' and nt1065 config from '" << ntcfg << "'" << endl;
+    cerr << "Using lattice algorithm from '" << ecp5alg << "' and lattice data from '" << ecp5data << "'" << endl;
     cerr << "You choose to use __" << ( useCypress ? "cypress" : "libusb" ) << "__ driver" << endl;
     cerr << "------------------------------" << endl;
 
@@ -92,8 +97,22 @@ int main( int argn, const char** argv )
 
     if ( dev->init(fximg.c_str(), ntcfg.c_str() ) != FX3_ERR_OK ) {
         cerr << endl << "Problems with hardware or driver type" << endl;
+        delete dev;
         return -1;
     }
+
+    if (dev->init_fpga(ecp5alg.c_str(), ecp5data.c_str()) != FX3_ERR_OK) {
+        cerr << endl << "Problems with loading Lattice firmware" << endl;
+        delete dev;
+        return -1;
+    }
+
+    if(dev->load1065Ctrlfile(ntcfg.c_str(), 49) != FX3_ERR_OK) {
+        cerr << endl << "Problems with loading nt config file " << endl;
+        delete dev;
+        return -1;
+    }
+
     cerr << "Device was inited." << endl << endl;
     dev->log = false;
 
@@ -169,7 +188,7 @@ int main( int argn, const char** argv )
 
         auto start_time = chrono::system_clock::now();
 
-
+#if 0
         poller = thread( [&]() {
             FILE* flog = fopen( "regdump.txt", "w" );
             while ( poller_running && device_is_ok ) {
@@ -232,6 +251,8 @@ int main( int argn, const char** argv )
             fclose(flog);
             cerr << "Poller thread finished" << endl;
         });
+
+#endif
 
         while ( device_is_ok ) {
             if ( bytes_to_dump ) {

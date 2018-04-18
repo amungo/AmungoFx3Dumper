@@ -10,6 +10,7 @@
 #include <windows.h>
 #include "cy_inc/CyAPI.h"
 
+#include <memory>
 #include <cstdint>
 #include <vector>
 #include <thread>
@@ -19,11 +20,18 @@
 #define MAX_QUEUE_SZ  64
 #define VENDOR_ID    ( 0x04B4 )
 #define PRODUCT_STREAM  ( 0x00F1 )
-#define PRODUCT_BOOT    ( 0x00F3 )
+#define PRODUCT_BOOT    ( 0x00F0 ) // ( 0x00F3 ) //@camry -- Удалить !!!!! ( 0x00F0 ) пока ипользуем то что прошито.
 
 typedef void (__stdcall * DataProcessorFunc)(char*, int);//data pointer, data size (bytes);
 
+class SSPICore;
+
 struct EndPointParams{
+    EndPointParams() : Attr(0), In(false),
+                    MaxPktSize(0), MaxBurst(0),
+                    Interface(0), Address(0)
+    {}
+
     int Attr;
     bool In;
     int MaxPktSize;
@@ -33,6 +41,11 @@ struct EndPointParams{
 };
 
 struct StartDataTransferParams{
+    StartDataTransferParams() : USBDevice(0), EndPt(0), PPX(0), QueueSize(0), TimeOut(0),
+                                bHighSpeedDevice(false), bSuperSpeedDevice(false), bStreaming(0),
+                                ThreadAlreadyStopped(false), DataProc(0)
+    {}
+
     CCyFX3Device	*USBDevice;
     CCyUSBEndPoint  *EndPt;
     int				PPX;
@@ -56,6 +69,8 @@ public:
 public:
     // FX3DevIfce interface
     fx3_dev_err_t init(const char *firmwareFileName, const char *additionalFirmwareFileName);
+    virtual fx3_dev_err_t init_fpga(const char* algoFileName, const char* dataFileName);
+
     void startRead(DeviceDataHandlerIfce *handler);
     void stopRead();
     void changeHandler(DeviceDataHandlerIfce *handler);
@@ -66,6 +81,21 @@ public:
 
     fx3_dev_err_t reset();
     fx3_dev_err_t print_version();
+
+    //----------------------- Lattice control ------------------
+    virtual fx3_dev_err_t send16bitSPI_ECP5(uint8_t addr, uint8_t data);
+    virtual fx3_dev_err_t sendECP5(uint8_t* buf, long len);
+    virtual fx3_dev_err_t recvECP5(uint8_t* buf, long len);
+    virtual fx3_dev_err_t resetECP5();
+    virtual fx3_dev_err_t checkECP5();
+    virtual fx3_dev_err_t csonECP5();
+    virtual fx3_dev_err_t csoffECP5();
+    virtual fx3_dev_err_t send24bitSPI8bit(unsigned int data);
+    virtual fx3_dev_err_t device_start();
+    virtual fx3_dev_err_t device_stop();
+    virtual fx3_dev_err_t device_reset();
+    virtual fx3_dev_err_t reset_nt1065();
+    virtual fx3_dev_err_t load1065Ctrlfile(const char* fwFileName, int lastaddr);
 
 private:
     fx3_dev_err_t scan( int& loadable_count, int& streamable_count );
@@ -93,7 +123,7 @@ private:
     uint32_t last_overflow_count;
     double size_tx_mb;
     
-
+    std::shared_ptr<SSPICore> m_SSPICore;
     // DeviceControlIOIfce interface
 public:
     uint8_t peek8(uint32_t register_address24);
