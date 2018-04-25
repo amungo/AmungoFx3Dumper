@@ -188,7 +188,6 @@ int main( int argn, const char** argv )
 
         auto start_time = chrono::system_clock::now();
 
-#if 0
         poller = thread( [&]() {
             FILE* flog = fopen( "regdump.txt", "w" );
             while ( poller_running && device_is_ok ) {
@@ -219,6 +218,7 @@ int main( int argn, const char** argv )
                             break;
                         }
                     } while ( ( rd_val[0] & 0x01 ) == 0x01 && res == FX3_ERR_OK && poller_running );
+                    cerr << " " << std::hex << (int)rd_val[0] << "--" << std::hex << (int)wr_val << endl; // !!!
 
                     auto cur_time = chrono::system_clock::now();
                     auto time_from_start = cur_time - start_time;
@@ -251,8 +251,6 @@ int main( int argn, const char** argv )
             fclose(flog);
             cerr << "Poller thread finished" << endl;
         });
-
-#endif
 
         while ( device_is_ok ) {
             if ( bytes_to_dump ) {
