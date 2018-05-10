@@ -1,9 +1,13 @@
 #include <stdio.h>
 #include <string.h>
+#include <sstream>
 #include "fx3dev.h"
 #include "HexParser.h"
 #include "pointdrawer.h"
 #include "host_commands.h"
+
+#include "lattice/lfe5u_core.h"
+#include "lattice/lfe5u_opcode.h"
 
 FX3Dev::FX3Dev( size_t one_block_size8, uint32_t dev_buffers_count ) :
     ctx( NULL ),
@@ -36,6 +40,8 @@ FX3Dev::FX3Dev( size_t one_block_size8, uint32_t dev_buffers_count ) :
         half_full_buffers[ i ] = new uint8_t[ half_full_size8 ];
     }
     write_buffer = new uint8_t[ half_full_size8 ];
+
+    m_SSPICore = std::shared_ptr<SSPICore>(new SSPICore(this));
 }
 
 FX3Dev::~FX3Dev() {
@@ -160,7 +166,22 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char
 
 fx3_dev_err_t FX3Dev::init_fpga(const char* algoFileName, const char* dataFileName)
 {
-    return FX3_ERR_OK;
+    fx3_dev_err_t retCode = FX3_ERR_OK;
+    int siRetCode = m_SSPICore->SSPIEm_preset( algoFileName, dataFileName);
+    siRetCode = m_SSPICore->SSPIEm(0xFFFFFFFF);
+
+    retCode = (siRetCode == PROC_OVER) ? FX3_ERR_OK : FX3_ERR_FPGA_DATA_FILE_IO_ERROR;
+
+    if(retCode == FX3_ERR_OK)
+    {
+        // Set DAC
+        retCode = send24bitSPI8bit(0x000AFFFF<<4);
+        retCode = device_stop();
+        retCode = reset_nt1065();
+        print_version();
+    }
+
+    return retCode;
 }
 
 fx3_dev_err_t FX3Dev::scan() {
@@ -212,7 +233,8 @@ fx3_dev_err_t FX3Dev::scan() {
                                          maxSize);
                             }
                             if ( dir == LIBUSB_ENDPOINT_IN ) {
-                                endpoint_from_dev_num = num;
+                                if(desc.idProduct != DEV_PID_FOR_FW_LOAD)
+                                    endpoint_from_dev_num = num;
                             } else {
                                 endpoint_from_hst_num = num;
                             }
@@ -474,20 +496,25 @@ fx3_dev_err_t FX3Dev::putReceiverRegValue(uint8_t addr, uint8_t value) {
 }
 
 fx3_dev_err_t FX3Dev::reset() {
-    uint8_t bmRequestType = LIBUSB_RECIPIENT_DEVICE | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_OUT;
-    uint8_t bRequest = CMD_CYPRESS_RESET;
-    uint16_t wValue = 0;
-    uint16_t wIndex = 1;
-    uint32_t timeout_ms = DEV_UPLOAD_TIMEOUT_MS;
+    if(device_handle)
+    {
+        uint8_t bmRequestType = LIBUSB_RECIPIENT_DEVICE | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_OUT;
+        uint8_t bRequest = CMD_CYPRESS_RESET;
+        uint16_t wValue = 0;
+        uint16_t wIndex = 1;
+        uint32_t timeout_ms = DEV_UPLOAD_TIMEOUT_MS;
 
-    uint8_t data[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+        uint8_t data[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-    int res = libusb_control_transfer( device_handle, bmRequestType, bRequest, wValue, wIndex, data, 16, timeout_ms );
-    if ( res != 16 ) {
-        fprintf( stderr, "FX3Dev::reset() send error %d %s\n", res, libusb_error_name(res) );
-        return FX3_ERR_REG_WRITE_FAIL;
+        int res = libusb_control_transfer( device_handle, bmRequestType, bRequest, wValue, wIndex, data, 16, timeout_ms );
+        if ( res != 16 ) {
+            fprintf( stderr, "FX3Dev::reset() send error %d %s\n", res, libusb_error_name(res) );
+            return FX3_ERR_REG_WRITE_FAIL;
+        }
+        return FX3_ERR_OK;
     }
-    return FX3_ERR_OK;
+
+    return FX3_ERR_BAD_DEVICE;
 }
 
 fx3_dev_err_t FX3Dev::print_version() {
@@ -515,69 +542,229 @@ fx3_dev_err_t FX3Dev::print_version() {
 }
 
 // -------------------------- Lattice control -------------------------------
-fx3_dev_err_t FX3Dev::send16bitSPI_ECP5(uint8_t addr, uint8_t data)
+fx3_dev_err_t FX3Dev::send16bitSPI_ECP5(uint8_t _addr, uint8_t _data)
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 16;
+
+    buf[0] = (uint8_t)_addr;
+    buf[1] = (uint8_t)_data;
+
+    uint8_t cmd = 0xD6;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    fprintf( stderr, "Reg:%u 0x%04x \n", _addr, _data);
+
+    return txControlToDevice( buf, len, cmd, value, index);
 }
 
-fx3_dev_err_t FX3Dev::sendECP5(uint8_t* buf, long len)
+fx3_dev_err_t FX3Dev::sendECP5(uint8_t* _data, long _data_len)
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  dummybuf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 16;
+    uint8_t* buf = dummybuf;
+
+    if(_data && _data_len != 0 ) {
+        buf = (uint8_t*)_data;
+        len = _data_len;
+    }
+
+    uint8_t cmd = CMD_ECP5_WRITE;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    return txControlToDevice(buf, len, cmd, value, index);
 }
 
-fx3_dev_err_t FX3Dev::recvECP5(uint8_t* buf, long len)
+fx3_dev_err_t FX3Dev::recvECP5(uint8_t* _data, long _data_len)
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  dummybuf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 16;
+    uint8_t* buf = dummybuf;
+
+    if(_data && _data_len != 0 ) {
+        buf = (uint8_t*)_data;
+        len = _data_len;
+    }
+    uint8_t cmd = CMD_ECP5_READ;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    return txControlFromDevice(buf, len, cmd, value, index );
 }
 
 fx3_dev_err_t FX3Dev::resetECP5()
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  dummybuf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 16;
+
+    uint8_t cmd = 0xD0;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    int success = (txControlFromDevice(dummybuf, len, cmd, value, index) == FX3_ERR_OK) ? 1 : 0;
+
+    return (success & dummybuf[0]) ? FX3_ERR_OK : FX3_ERR_CTRL_TX_FAIL;
 }
 
 fx3_dev_err_t FX3Dev::checkECP5()
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  dummybuf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    memset(&dummybuf[0], 0xff, 16);
+
+    uint32_t len = 16;
+
+    uint8_t cmd = CMD_ECP5_CHECK;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    int success = (txControlFromDevice(dummybuf, len, cmd, value, index) == FX3_ERR_OK) ? 1 : 0;
+
+    return (success & dummybuf[0]) ? FX3_ERR_OK : FX3_ERR_CTRL_TX_FAIL;
 }
 
 fx3_dev_err_t FX3Dev::csonECP5()
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  dummybuf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    ::memset(&dummybuf[0], 0xff, 16);
+    uint32_t len = 16;
+
+    uint8_t cmd = CMD_ECP5_CSON;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    int success = (txControlToDevice(dummybuf, len, cmd, value, index) == FX3_ERR_OK) ? 1 : 0;
+
+    return (success & dummybuf[0]) ? FX3_ERR_OK : FX3_ERR_CTRL_TX_FAIL;
 }
 
 fx3_dev_err_t FX3Dev::csoffECP5()
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  dummybuf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    ::memset(&dummybuf[0], 0xff, 16);
+    uint32_t len = 16;
+
+    uint8_t cmd = CMD_ECP5_CSOFF;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    int success = (txControlToDevice(dummybuf, len, cmd, value, index) == FX3_ERR_OK) ? 1 : 0;
+
+    return (success & dummybuf[0]) ? FX3_ERR_OK : FX3_ERR_CTRL_TX_FAIL;
 }
 
-fx3_dev_err_t FX3Dev::send24bitSPI8bit(unsigned int data)
+fx3_dev_err_t FX3Dev::send24bitSPI8bit(unsigned int _data)
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 16;
+
+    buf[0] = (uint8_t)(_data>16);
+    buf[1] = (uint8_t)(_data>>8);
+    buf[2] = (uint8_t)_data;
+
+    uint8_t cmd = 0xD8;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    return txControlToDevice( buf, len, cmd, value, index);
 }
 
 fx3_dev_err_t FX3Dev::device_start()
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 16;
+
+    buf[2] = (uint8_t)(0xFF);
+
+    uint8_t cmd = 0xBA;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    return txControlToDevice(buf, len, cmd, value, index);
 }
 
 fx3_dev_err_t FX3Dev::device_stop()
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 16;
+
+    buf[2] = (uint8_t)(0xFF);
+
+    uint8_t cmd = 0xBB;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    return txControlToDevice(buf, len, cmd, value, index);
 }
 
 fx3_dev_err_t FX3Dev::device_reset()
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 16;
+
+    buf[2] = (uint8_t)(0xFF);
+
+    uint8_t cmd = 0xB3;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    return txControlToDevice(buf, len, cmd, value, index);
 }
 
 fx3_dev_err_t FX3Dev::reset_nt1065()
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t  buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 16;
+
+    buf[2] = (uint8_t)(0xFF);
+
+    uint8_t cmd = 0xD7;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    return txControlToDevice(buf, len, cmd, value, index);
 }
 
 fx3_dev_err_t FX3Dev::load1065Ctrlfile(const char* fwFileName, int lastaddr)
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    fx3_dev_err_t retCode = FX3_ERR_OK;
+    char line[128];
+
+    FILE* pFile = fopen( fwFileName, "r" );
+    if(!pFile) {
+        return FX3_ERR_FIRMWARE_FILE_IO_ERROR;
+    }
+
+    while(fgets(line, 128, pFile) != NULL)
+    {
+        const std::string sline(line);
+        if(sline[0] != ';')
+        {
+            size_t regpos = sline.find("Reg");
+            if(regpos != std::string::npos)
+            {
+                std::string buf;
+                std::stringstream ss(sline); // Insert the string into a stream
+                std::vector<std::string> tokens;
+                while(ss >> buf)
+                    tokens.push_back(buf);
+                if(tokens.size() == 2) // addr & value
+                {
+                    int addr = std::stoi(tokens[0].erase(0,3), nullptr, 10);
+                    int value = std::stoi(tokens.at(1), nullptr, 16);
+                    std::this_thread::sleep_for(std::chrono::milliseconds(20));
+                    retCode = send16bitSPI_ECP5(addr, value);
+                    if(retCode != FX3_ERR_OK || addr == lastaddr)
+                        break;
+                }
+            }
+        }
+    }
+
+    fclose(pFile);
+
+    return retCode;
 }
 
 // ---------------------------------------------------------------------------
@@ -671,6 +858,8 @@ fx3_dev_err_t FX3Dev::sendDataToDeviceASynch(uint8_t* data, uint32_t size8) {
 
 void FX3Dev::startRead( DeviceDataHandlerIfce* handler ) {
     //fprintf(stderr,"FX3Dev::startRead()\n");
+    device_start();
+
     size_tx_mb = 0.0;
     
     int res;
