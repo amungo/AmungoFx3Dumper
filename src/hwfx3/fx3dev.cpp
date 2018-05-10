@@ -559,6 +559,12 @@ fx3_dev_err_t FX3Dev::send16bitSPI_ECP5(uint8_t _addr, uint8_t _data)
     return txControlToDevice( buf, len, cmd, value, index);
 }
 
+
+fx3_dev_err_t FX3Dev::read16bitSPI_ECP5(uint8_t addr, uint8_t* data)
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
 fx3_dev_err_t FX3Dev::sendECP5(uint8_t* _data, long _data_len)
 {
     uint8_t  dummybuf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
