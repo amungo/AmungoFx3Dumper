@@ -167,6 +167,8 @@ void FX3DevCyAPI::stopRead() {
     }
     changeHandler( NULL );
     if ( log ) fprintf( stderr, "FX3DevCyAPI::stopRead() all done!\n" );
+
+    device_stop();
 }
 
 void FX3DevCyAPI::changeHandler(DeviceDataHandlerIfce *handler) {
