@@ -491,7 +491,7 @@ fx3_dev_err_t FX3Dev::getReceiverRegValue(uint8_t addr, uint8_t &value) {
 }
 
 fx3_dev_err_t FX3Dev::putReceiverRegValue(uint8_t addr, uint8_t value) {
-    send16bitToDeviceSynch( value, addr );
+    send16bitToDeviceSynch( addr, value);
     return FX3_ERR_OK;
 }
 
@@ -562,7 +562,20 @@ fx3_dev_err_t FX3Dev::send16bitSPI_ECP5(uint8_t _addr, uint8_t _data)
 
 fx3_dev_err_t FX3Dev::read16bitSPI_ECP5(uint8_t addr, uint8_t* data)
 {
-    return FX3_ERR_CTRL_TX_FAIL;
+    uint8_t buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 16;
+    uint8_t addr_fix = (addr|0x80);
+
+    //fprintf( stderr, "FX3Dev::read16bitSPI_ECP5() from  0x%03X\n", addr );
+
+    uint8_t cmd = CMD_REG_READ8;
+    uint16_t value = addr_fix;
+    uint16_t index = *data;
+
+    fx3_dev_err_t success = txControlFromDevice(buf, len, cmd, value, index);
+    *data = buf[0];
+
+    return success;
 }
 
 fx3_dev_err_t FX3Dev::sendECP5(uint8_t* _data, long _data_len)
@@ -780,7 +793,7 @@ fx3_dev_err_t FX3Dev::send16bitToDeviceSynch( uint8_t byte0, uint8_t byte1 ) {
     //fprintf( stderr, "FX3Dev::send16bitToDevice( 0x%02X, 0x%02X )\n", byte0, byte1 );
     // see transferDataToDevice() for more information abput this specific values
     uint8_t bmRequestType = LIBUSB_RECIPIENT_DEVICE | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_OUT;
-    uint8_t bRequest = CMD_REG_WRITE;
+    uint8_t bRequest = CMD_REG_WRITE8;
     uint16_t wValue = 0;
     uint16_t wIndex = 1;
     uint32_t timeout_ms = DEV_UPLOAD_TIMEOUT_MS;
@@ -799,18 +812,19 @@ fx3_dev_err_t FX3Dev::send16bitToDeviceSynch( uint8_t byte0, uint8_t byte1 ) {
 
 fx3_dev_err_t FX3Dev::readFromDeviceSynch(uint8_t addr, uint8_t *data) {
     uint8_t buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint16_t len = 16;
     buf[0] = *data;
     buf[1] = addr | 0x80;
 
 
     uint8_t bmRequestType = LIBUSB_RECIPIENT_DEVICE | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN;
-    uint8_t bRequest = CMD_REG_READ;
-    uint16_t wValue = *data;
-    uint16_t wIndex = addr | 0x80;
+    uint8_t bRequest = CMD_REG_READ8;
+    uint16_t wValue = addr | 0x80;
+    uint16_t wIndex = *data;
     uint32_t timeout_ms = DEV_UPLOAD_TIMEOUT_MS;
 
-    int res = libusb_control_transfer( device_handle, bmRequestType, bRequest, wValue, wIndex, buf, 16, timeout_ms );
-    if ( res != 16 ) {
+    int res = libusb_control_transfer( device_handle, bmRequestType, bRequest, wValue, wIndex, buf, len, timeout_ms );
+    if ( res != len ) {
         fprintf( stderr, "FX3Dev::readFromDeviceSynch() error %d %s\n", res, libusb_error_name(res) );
         return FX3_ERR_REG_WRITE_FAIL;
     } else {
