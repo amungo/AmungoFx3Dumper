@@ -248,7 +248,7 @@ fx3_dev_err_t FX3DevCyAPI::getReceiverRegValue(uint8_t addr, uint8_t &value) {
 }
 
 fx3_dev_err_t FX3DevCyAPI::putReceiverRegValue(uint8_t addr, uint8_t value) {
-    return send16bitSPI( value, addr );
+    return send16bitSPI( addr, value );
 }
 
 fx3_dev_err_t FX3DevCyAPI::reset() {
