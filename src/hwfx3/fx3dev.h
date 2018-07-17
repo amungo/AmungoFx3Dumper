@@ -1,31 +1,19 @@
 #ifndef SDR_FX3DEV_H
 #define SDR_FX3DEV_H
 
-extern "C" {
-#include "libusb.h"
-}
-
-#include <mutex>
-
-#include "fx3devifce.h"
-#include "fx3deverr.h"
-#include "fx3devdebuginfo.h"
-#include "fx3fwparser.h"
-
-#ifndef WIN32
-#include <stdint.h>
-#include <unistd.h>
-#endif
-
-#ifdef WIN32
-#include <windows.h>
-#endif
-
 #include <thread>
 #include <mutex>
 #include <list>
 #include <vector>
 
+extern "C" {
+#include "libusb.h"
+}
+
+#include "fx3devifce.h"
+#include "fx3deverr.h"
+#include "fx3devdebuginfo.h"
+#include "fx3fwparser.h"
 
 
 /*

@@ -2,10 +2,10 @@
 #define FX3DEVIFCE
 
 #include <mutex>
+#include <cstddef>
 
 #include "fx3deverr.h"
 #include "fx3devdebuginfo.h"
-#include <stddef.h>
 
 // Interface for handling data from FX3 device
 class DeviceDataHandlerIfce {

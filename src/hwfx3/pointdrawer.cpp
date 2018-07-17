@@ -1,7 +1,7 @@
-#include "pointdrawer.h"
-
 #include <chrono>
 #include <iostream>
+
+#include "pointdrawer.h"
 
 PointDrawer::PointDrawer( int milliseconds ) {
 

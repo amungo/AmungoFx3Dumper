@@ -1,12 +1,8 @@
 #include <iostream>
 #include <chrono>
-#include <inttypes.h>
+#include <cstddef>
 
 #include "hwfx3/fx3dev.h"
-
-#ifdef WIN32
-#include "hwfx3/fx3devcyapi.h"
-#endif
 
 #include "processors/streamdumper.h"
 
@@ -14,11 +10,6 @@ using namespace std;
 
 int main( int argn, const char** argv )
 {
-#ifndef WIN32
-    setbuf(stdout, NULL);
-    setbuf(stderr, NULL);
-#endif
-
     cerr << "*** Amungo's dumper for nut4nt board ***" << endl << endl;
     if ( argn != 6 ) {
         cerr << "Usage: "
@@ -74,21 +65,7 @@ int main( int argn, const char** argv )
     cerr << "Wait while device is being initing..." << endl;
     FX3DevIfce* dev = nullptr;
 
-#ifdef WIN32
-    if ( useCypress ) {
-        dev = new FX3DevCyAPI();
-    } else {
-        dev = new FX3Dev( 2 * 1024 * 1024, 7 );
-    }
-#else
-    if ( useCypress ) {
-        cerr << endl
-             << "WARNING: you can't use cypress driver under Linux."
-             << " Please check if you use correct scripts!"
-             << endl;
-    }
     dev = new FX3Dev( 2 * 1024 * 1024, 7 );
-#endif
 
     const char* ntcfgcstr = ntcfg.c_str();
     bool no_nt_mode = false;
@@ -230,7 +207,7 @@ int main( int argn, const char** argv )
                         break;
                     }
 
-                    fprintf( flog, "%8" PRIu64 " ", ms_from_start);
+                    fprintf( flog, "%llu", ms_from_start);
                     for ( int i = 0; i < 6; i++ ) {
                         fprintf( flog, "%02X ", rd_val[i] );
                         rd_val[i] = 0x00;

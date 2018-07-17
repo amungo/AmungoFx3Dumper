@@ -1,6 +1,6 @@
-#include "fx3fwparser.h"
-
 #include <cstdio>
+
+#include "fx3fwparser.h"
 
 FX3DevFwParser::FX3DevFwParser() :
     fw_buf( NULL )

@@ -1,7 +1,7 @@
-#include "HexParser.h"
-
 #include <fstream>
 #include <string>
+
+#include "HexParser.h"
 
 int parse_hex_file(const char* fname, std::vector<unsigned int>& addresses, std::vector<unsigned int>& hexdatas) {
     addresses.clear();

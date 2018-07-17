@@ -1,7 +1,7 @@
-#include "streamdumper.h"
-
 #include <cstdio>
 #include <iostream>
+
+#include "streamdumper.h"
 
 using namespace std;
 

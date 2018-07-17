@@ -1,12 +1,7 @@
 #ifndef STREAMERDUMPER_H
 #define STREAMERDUMPER_H
 
-#ifndef WIN32
-#include <stdint.h>
-#else
 #include <cstdint>
-#endif
-
 #include <string>
 #include <mutex>
 #include <cstdio>
