@@ -20,7 +20,7 @@ void usage() {
     cerr << "  --file=filename\n    Use file 'filename' for output\n";
     cerr << "  --socket[=NNN]\n    Use TCP local port NNN for output. Default port is 13131\n";
     cerr << "Other options:\n";
-    cerr << "  --firmware=fw.img\n    Use firmware file 'fw.img'\n";
+    cerr << "  --firmware=filename\n    Use firmware file 'filename' (default is 'fx3sw.img')\n";
     cerr << "  --duration=F.FFF\n    Dump F.FFF seconds of signal\n";
     cerr << "  --verbose\n    Be verbose\n";
     cerr << endl;
@@ -46,7 +46,7 @@ int main( int argc, char** argv )
     };
 
     int runmode = STDOUT_MODE;
-    std::string fximg;
+    std::string fximg("fx3sw.img");
     std::string dumpfile("stdout");
     int netport = 13131;
     int64_t duration_ms = 5000;
