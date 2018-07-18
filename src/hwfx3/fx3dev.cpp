@@ -51,12 +51,13 @@ FX3Dev::~FX3Dev() {
         std::this_thread::sleep_for(std::chrono::milliseconds(DEV_DOWNLOAD_TIMEOUT_MS/10));
         fprintf(stderr, ".");
     }
-    fprintf( stderr, "\nReseting chip\n" );
-    if ( reset() == FX3_ERR_OK ) {
-        fprintf( stderr, "Sucess!\n" );
-    } else {
-        fprintf( stderr, "Something wrong. Do you use last firmware?\n" );
-    }
+
+//    fprintf( stderr, "\nReseting chip\n" );
+//    if ( reset() == FX3_ERR_OK ) {
+//        fprintf( stderr, "Sucess!\n" );
+//    } else {
+//        fprintf( stderr, "Something wrong. Do you use last firmware?\n" );
+//    }
     
     if ( device_handle ) {
         int ires = libusb_release_interface(device_handle, 0);
@@ -78,7 +79,7 @@ FX3Dev::~FX3Dev() {
     }
 }
 
-fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char* additionalFirmwareFileName /* = NULL */ ) {
+fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */) {
     int ires = libusb_init( &ctx );
     if ( ires != 0 ) {
         fprintf( stderr, "FX3Dev::Init(): __error__ libusb_init, code %d %s\n", ires, libusb_error_name( ires ) );
@@ -92,8 +93,12 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char
     fx3_dev_err_t eres = FX3_ERR_OK;
 
     if ( endpoint_from_dev_num == endpoint_invalid ) {
-        if ( log ) fprintf( stderr, "FX3Dev::Init() asked to flash firmware. Looking for device without firmware (pid = 0x%04x)\n", DEV_PID_FOR_FW_LOAD );
+        if ( log ) fprintf( stderr, "FX3Dev::Init() Looking for a device without firmware (pid = 0x%02X or 0x%02X)\n",
+                            DEV_PID_FOR_FW_LOAD, DEV_PID_FOR_FW_LOAD_ALT );
         device_handle = libusb_open_device_with_vid_pid( ctx, VENDOR_ID, DEV_PID_FOR_FW_LOAD );
+        if ( device_handle == NULL ) {
+            device_handle = libusb_open_device_with_vid_pid( ctx, VENDOR_ID, DEV_PID_FOR_FW_LOAD_ALT );
+        }
         if( device_handle != NULL ) {
             if ( log ) fprintf( stderr, "FX3Dev::Init() Found device. Will flash it with firmware from file '%s'\n", firmwareFileName );
             eres = firmwareFlashFromFile( firmwareFileName );
@@ -133,19 +138,6 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */, const char
         return FX3_ERR_NO_DEVICE_FOUND;
     }
     
-    if ( additionalFirmwareFileName != NULL ) {
-        if ( additionalFirmwareFileName[ 0 ] != 0 ) {
-            PointDrawer drawer(100);
-            eres = loadAdditionalFirmware( additionalFirmwareFileName, 48 );
-            if ( eres != FX3_ERR_OK ) {
-                fprintf( stderr, "FX3Dev::Init() __error__ loadAdditionalFirmware %d %s\n", eres, fx3_get_error_string( eres ) );
-                return eres;
-            }
-        }
-    }
-
-
-
     ires = libusb_claim_interface(device_handle, 0);
     if ( ires < 0 ) {
         fprintf( stderr, "FX3Dev::Init() __error__ libusb_claim_interface failed %d %s\n", ires, libusb_error_name( ires ) );
@@ -177,7 +169,7 @@ fx3_dev_err_t FX3Dev::scan() {
             uint8_t port = libusb_get_port_number(devs[i]);
             if ( log ) fprintf( stderr, "[%2d] bus:%u port:%u 0x%04x, 0x%04x", i, bus, port, desc.idVendor, desc.idProduct );
             if ( desc.idVendor == VENDOR_ID ) {
-                if ( desc.idProduct == DEV_PID_FOR_FW_LOAD ) {
+                if ( desc.idProduct == DEV_PID_FOR_FW_LOAD || desc.idProduct == DEV_PID_FOR_FW_LOAD_ALT ) {
                     if ( log ) fprintf( stderr, " *** firmware needed\n" );
                 } else if ( desc.idProduct == DEV_PID_NO_FW_NEEDED ) {
                     if ( log ) fprintf( stderr, " *** ready adc device\n" );
@@ -367,39 +359,6 @@ fx3_dev_err_t FX3Dev::txControlFromDevice(uint8_t* dest, uint32_t size8 , uint8_
     if ( res != ( int ) size8 ) {
         fprintf( stderr, "FX3Dev::transferDataFromDevice() error %d %s\n", res, libusb_error_name(res) );
         return FX3_ERR_CTRL_TX_FAIL;
-    }
-    return FX3_ERR_OK;
-}
-
-fx3_dev_err_t FX3Dev::loadAdditionalFirmware( const char* fw_name, uint32_t stop_addr ) {
-    if ( !fw_name ) {
-        return FX3_ERR_ADDFIRMWARE_FILE_IO_ERROR;
-    }
-    
-    FILE* f = fopen( fw_name, "r" );
-    if ( !f ) {
-        fprintf( stderr, "FX3Dev::loadAdditionalFirmware __error__ can't open '%s'\n", fw_name );
-        return FX3_ERR_ADDFIRMWARE_FILE_IO_ERROR;
-    } else {
-        fclose( f );
-    }
-    
-    std::vector<uint32_t> addr;
-    std::vector<uint32_t> data;
-    
-    parse_hex_file( fw_name, addr, data );
-    
-    for ( uint32_t i = 0; i < addr.size(); i++ ) {
-        fx3_dev_err_t eres = send16bitToDeviceSynch(data[i], addr[i]);
-        if ( eres != FX3_ERR_OK ) {
-            return eres;
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(ADD_FW_LOAD_PAUSE_MS));
-        
-        if ( addr[i] == stop_addr ) {
-            break;
-        }
     }
     return FX3_ERR_OK;
 }

@@ -37,7 +37,7 @@ public:
     virtual ~FX3Dev();
 
     // **** overrides FX3DevIfce
-    fx3_dev_err_t init( const char* firmwareFileName = NULL, const char* additionalFirmwareFileName = NULL );
+    fx3_dev_err_t init( const char* firmwareFileName = NULL );
     void startRead( DeviceDataHandlerIfce* handler );
     void stopRead();
     void changeHandler(DeviceDataHandlerIfce *handler);
@@ -54,6 +54,7 @@ private:
     const uint32_t VENDOR_ID = 0x04b4;
     const uint32_t DEV_PID_NO_FW_NEEDED = 0x00f1; // PID of device with already flashed firmware
     const uint32_t DEV_PID_FOR_FW_LOAD  = 0x00f3; // PID of device without flashed firmware. This device must be flashed before use.
+    const uint32_t DEV_PID_FOR_FW_LOAD_ALT  = 0x00f0; // PID of device without flashed firmware. This device must be flashed before use.
     
     const uint32_t MAX_UPLOAD_BLOCK_SIZE8 = 2048; // For firmware flashing.
     const uint8_t  CMD_FW_LOAD   = 0xA0;          // Vendor command for firmware flashing.
@@ -83,8 +84,6 @@ private:
     fx3_dev_err_t txCheckFwFromRAM( uint8_t* dest, uint32_t dev_ram_addr, uint32_t size8 );
     fx3_dev_err_t txControlToDevice(     uint8_t* src, uint32_t size8, uint8_t cmd, uint16_t wValue, uint16_t wIndex );
     fx3_dev_err_t txControlFromDevice(  uint8_t* dest, uint32_t size8, uint8_t cmd, uint16_t wValue, uint16_t wIndex );
-    
-    fx3_dev_err_t loadAdditionalFirmware( const char* fw_name, uint32_t stop_addr );
     
     fx3_dev_err_t send16bitToDeviceSynch( uint8_t byte0 , uint8_t byte1 );
     fx3_dev_err_t readFromDeviceSynch( uint8_t addr , uint8_t* data );

@@ -20,8 +20,7 @@ public:
     virtual ~FX3DevIfce(){}
 
     // Opens device and flash it if neccessary (set firmwareFileName to NULL to disable flashing)
-    virtual fx3_dev_err_t init( const char* firmwareFileName,
-                                const char* additionalFirmwareFileName ) = 0;
+    virtual fx3_dev_err_t init( const char* firmwareFileName ) = 0;
 
     // Starts reading of signal from device and sends data to handler.
     // If handler is NULL, data will be read and skipped
