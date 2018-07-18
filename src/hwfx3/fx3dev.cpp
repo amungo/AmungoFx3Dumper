@@ -589,7 +589,7 @@ void FX3Dev::startRead( DeviceDataHandlerIfce* handler ) {
 void FX3Dev::event_loop( void ) {
     if ( log ) fprintf( stderr, "FX3Dev::read_loop() started\n" );
     while(event_loop_running) {
-        struct timeval tv  = { 0, DEV_DOWNLOAD_TIMEOUT_MS * 1000 };
+        struct timeval tv  = { 0, (long)(DEV_DOWNLOAD_TIMEOUT_MS * 1000) };
         int res = libusb_handle_events_timeout_completed( NULL, &tv, NULL );
         if(res != 0) {
             fprintf(stderr,"FX3Dev::read_loop() __error__ %d, read error: %s\n", res, libusb_error_name(res));
