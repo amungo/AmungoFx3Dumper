@@ -144,7 +144,7 @@ fx3_dev_err_t FX3Dev::init(const char* firmwareFileName /* = NULL */) {
         return FX3_ERR_USB_INIT_FAIL;
     }
 
-    print_version();
+    //print_version();
     
     return FX3_ERR_OK;
 }
