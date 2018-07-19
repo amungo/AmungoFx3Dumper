@@ -23,6 +23,7 @@ set(SOURCE_FILES main.cpp )
 add_subdirectory("hwfx3")
 add_subdirectory("processors")
 add_subdirectory("sys")
+add_subdirectory("net")
 
 add_executable(amgdmp ${SOURCE_FILES})
 target_link_libraries(
@@ -30,5 +31,6 @@ target_link_libraries(
     hwfx3
     processors
     sys
+    net
     ${LIBUSB_LIBNAME}
 )
