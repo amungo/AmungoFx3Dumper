@@ -57,7 +57,7 @@ void SocketDumper::AcceptConnection()
     if ( uninet::sock_is_valid(sfd) ) {
         std::cerr << "Client Connect" << std::endl;
         SetClientSocket(sfd);
-    } else {
+    } else if ( accept_running ) {
         std::cerr << "\nSocketDumper::AcceptConnection(): accept failed" << std::endl;
     }
 }
