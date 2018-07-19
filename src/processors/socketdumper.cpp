@@ -35,7 +35,7 @@ SocketDumper::SocketDumper(int port) : port(port)
     }
 
     accept_running = true;
-    accept_thread = std::thread( &AcceptConnection, this );
+    accept_thread = std::thread( &AcceptRun, this );
 }
 
 SocketDumper::~SocketDumper()
