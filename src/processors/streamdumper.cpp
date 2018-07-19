@@ -43,7 +43,7 @@ StreamDumper::DumpInfo_t StreamDumper::GetInfo() {
     return info;
 }
 
-void StreamDumper::HandleMessageAsync(std::vector<char> *message_ptr, const int current_queue_size, bool &free_ptr_flag) {
+void StreamDumper::HandleMessageAsync(std::vector<char> *message_ptr, const int /*current_queue_size*/, bool &free_ptr_flag) {
     free_ptr_flag = true;
     if ( file ) {
         size_t wrote = fwrite( message_ptr->data(), 1, message_ptr->size(), file );

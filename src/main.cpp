@@ -8,6 +8,7 @@
 #include "hwfx3/fx3dev.h"
 
 #include "processors/streamdumper.h"
+#include "processors/socketdumper.h"
 
 using namespace std;
 
@@ -141,7 +142,8 @@ int main( int argc, char** argv )
         cerr << "\n\n ==== Device was inited ==== \n" << endl;
     }
 
-    StreamDumper* dumper = nullptr;
+    StreamDumper* streamDumper = nullptr;
+    SocketDumper* socketDumper = nullptr;
     int32_t iter_time_ms = 1000;
     if ( duration_ms > 60000 ) {
         iter_time_ms = 5000;
@@ -156,8 +158,17 @@ int main( int argc, char** argv )
     }
     try {
 
-        dumper = new StreamDumper( dumpfile );
-        dev->startRead( dumper );
+        DumperIfce* dumperInfoGetter = nullptr;
+        if ( runmode == STDOUT_MODE || runmode == FILE_MODE ) {
+            streamDumper = new StreamDumper( dumpfile );
+            dev->startRead( streamDumper );
+            dumperInfoGetter = streamDumper;
+
+        } else if ( runmode == SOCKET_MODE ) {
+            socketDumper = new SocketDumper( netport );
+            dev->startRead( socketDumper );
+            dumperInfoGetter = socketDumper;
+        }
 
         auto start_time = chrono::system_clock::now();
         auto prev_time  = start_time;
@@ -171,7 +182,7 @@ int main( int argc, char** argv )
             auto delta_all = now_time - start_time;
             auto delta_iter = now_time - prev_time;
             prev_time = now_time;
-            StreamDumper::DumpInfo_t info = dumper->GetInfo();
+            StreamDumper::DumpInfo_t info = dumperInfoGetter->GetInfo();
             if ( info.error_count ) {
                 cerr << "Stop because of FILE IO errors" << endl;
                 break;
@@ -201,7 +212,13 @@ int main( int argc, char** argv )
     dev->changeHandler(nullptr);
 
     delete dev;
-    delete dumper;
+
+    if ( streamDumper ) {
+        delete streamDumper;
+    }
+    if ( socketDumper ) {
+        delete socketDumper;
+    }
 
     cerr << "Bye" << endl;
 
