@@ -96,7 +96,9 @@ int main( int argc, char** argv )
                 fximg = std::string(optarg);
                 break;
             case 'p':
-                netport = atoi(optarg);
+                if (optarg) {
+                    netport = atoi(optarg);
+                }
                 runmode = SOCKET_MODE;
                 break;
             case 'd':
