@@ -33,6 +33,8 @@ StreamDumper::~StreamDumper() {
 
 void StreamDumper::HandleDeviceData(void *data_pointer, size_t size_in_bytes)
 {
+    info.bytes_rcvd += size_in_bytes;
+
     char* src = ( char* ) data_pointer;
     std::vector<char>* msg = new std::vector<char>( src, src + size_in_bytes );
     this->ReceiveMessage( msg );

@@ -50,7 +50,7 @@ int main( int argc, char** argv )
     std::string fximg("fx3sw.img");
     std::string dumpfile("stdout");
     int netport = 13131;
-    int64_t duration_ms = 5000;
+    double duration_sec = 5.0;
     int verbose = 0;
 
     while (true)
@@ -102,7 +102,7 @@ int main( int argc, char** argv )
                 runmode = SOCKET_MODE;
                 break;
             case 'd':
-                duration_ms = atof(optarg) * 1000.0;
+                duration_sec = atof(optarg);
                 break;
             // Error
             case '?': /* getopt_long already printed an error message. */ break;
@@ -147,13 +147,13 @@ int main( int argc, char** argv )
     StreamDumper* streamDumper = nullptr;
     SocketDumper* socketDumper = nullptr;
     int32_t iter_time_ms = 1000;
-    if ( duration_ms > 60000 ) {
+    if ( duration_sec > 60.0 ) {
         iter_time_ms = 5000;
-    } else if ( duration_ms > 10000 ) {
+    } else if ( duration_sec > 10.0 ) {
         iter_time_ms = 2000;
-    } else if ( duration_ms > 4000 ) {
+    } else if ( duration_sec >  4.0 ) {
         iter_time_ms = 1000;
-    } else if ( duration_ms > 2000 ) {
+    } else if ( duration_sec >  2.0 ) {
         iter_time_ms = 200;
     } else {
         iter_time_ms = 100;
@@ -174,31 +174,35 @@ int main( int argc, char** argv )
 
         auto start_time = chrono::system_clock::now();
         auto prev_time  = start_time;
-        double prev_mb  = 0.0;
+        double prev_rcvd   = 0.0;
+        double prev_dumped = 0.0;
 
         cerr << std::fixed << std::setprecision( 1 );
 
         while ( true ) {
             std::this_thread::sleep_for(chrono::milliseconds(iter_time_ms));
-            auto now_time = chrono::system_clock::now();
-            auto delta_all = now_time - start_time;
-            auto delta_iter = now_time - prev_time;
-            prev_time = now_time;
             StreamDumper::DumpInfo_t info = dumperInfoGetter->GetInfo();
             if ( info.error_count ) {
                 cerr << "Stop because of FILE IO errors" << endl;
                 break;
             }
-            double mb_all  = (double) info.bytes_dumped / ( 1000.0 * 1000.0 );
-            double mb_iter = mb_all - prev_mb;
-            prev_mb = mb_all;
-            double rate_iter_mb = mb_iter / std::chrono::duration<double>(delta_iter).count();
-            double rate_all_mb  = mb_all  / std::chrono::duration<double>(delta_all ).count();
-            cerr << "[" << std::chrono::duration<double>(delta_all ).count() << " sec] "
-                 << mb_all << " MB, "
-                 << rate_iter_mb << " (" << rate_all_mb << ") MBps\n";
+            auto time_now  = chrono::system_clock::now();
+            auto time_all  = std::chrono::duration<double>(time_now - start_time).count();
+            auto time_iter = std::chrono::duration<double>(time_now - prev_time).count();
+            double rcvd_all  = (double) info.bytes_rcvd / ( 1000.0 * 1000.0 );
+            double dumped_all  = (double) info.bytes_dumped / ( 1000.0 * 1000.0 );
 
-            if ( delta_all > std::chrono::milliseconds( duration_ms ) ) {
+            cerr << "[" << std::chrono::duration<double>(time_all ).count() << " sec] "
+                 << "Rcv: " << rcvd_all << " MB, "
+                 << (rcvd_all - prev_rcvd) / time_iter << " MBps, "
+                 << "Dumping: " << (dumped_all - prev_dumped) / time_iter << " MBps\n";
+
+            prev_time   = time_now;
+            prev_rcvd   = rcvd_all;
+            prev_dumped = dumped_all;
+
+
+            if ( time_all > duration_sec ) {
                 cerr << "Done" << endl;
                 break;
             }
