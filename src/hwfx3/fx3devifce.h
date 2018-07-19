@@ -10,6 +10,7 @@
 // Interface for handling data from FX3 device
 class DeviceDataHandlerIfce {
 public:
+    virtual ~DeviceDataHandlerIfce() = default;
     virtual void HandleDeviceData( void* data_pointer, size_t size_in_bytes ) = 0;
 };
 

@@ -4,6 +4,7 @@
 template <class T>
 class MessageReceiverIfce {
 public:
+    virtual ~MessageReceiverIfce() = default;
     virtual void ReceiveMessage( T* message_ptr ) = 0;
 };
 
