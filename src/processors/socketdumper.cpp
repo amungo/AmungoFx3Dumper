@@ -6,7 +6,7 @@
 SocketDumper::SocketDumper(int port) : port(port)
 {
     listen_socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    client_socket_fd = uninet::sock_get_null_fd();
+    SetClientSocket( uninet::sock_get_null_fd() );
 
     if( uninet::sock_is_valid(listen_socket_fd) < 0) {
         throw std::runtime_error("socket() failed");
@@ -55,7 +55,7 @@ void SocketDumper::AcceptConnection()
     uninet::sock_fd_t sfd = accept(listen_socket_fd, &client, (socklen_t*)&c);
 
     if ( uninet::sock_is_valid(sfd) ) {
-        std::cerr << "SocketDumper::AcceptConnection(): Have connection" << std::endl;
+        std::cerr << "Client Connect" << std::endl;
         SetClientSocket(sfd);
     } else {
         std::cerr << "\nSocketDumper::AcceptConnection(): accept failed" << std::endl;
@@ -85,6 +85,13 @@ void SocketDumper::AcceptRun()
     }
 }
 
+void SocketDumper::Disconnect()
+{
+    std::cerr << "Client Disconnect" << std::endl;
+    uninet::sock_close( client_socket_fd );
+    SetClientSocket( uninet::sock_get_null_fd() );
+}
+
 
 void SocketDumper::HandleDeviceData(void *data_pointer, size_t size_in_bytes)
 {
@@ -107,7 +114,11 @@ void SocketDumper::HandleMessageAsync(std::vector<char> *message_ptr, const int 
     if ( IsConnected() ) {
         ssize_t result = uninet::sock_send(client_socket_fd, message_ptr->data(), message_ptr->size());
         if ( result != (ssize_t)message_ptr->size() ) {
-            std::cerr << "Socket write error: result = " << result << ", try wrote " << message_ptr->size() << " bytes" << std::endl;
+            if ( result <= 0 && message_ptr->size() ) {
+                Disconnect();
+            } else {
+                std::cerr << "Socket write error: result = " << result << ", try wrote " << message_ptr->size() << " bytes" << std::endl;
+            }
         }
         {
             std::lock_guard<std::mutex> lck(mtx_info);

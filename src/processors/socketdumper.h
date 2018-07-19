@@ -31,6 +31,7 @@ protected:
     bool IsConnected();
     void SetClientSocket( uninet::sock_fd_t sfd );
     void AcceptRun();
+    void Disconnect();
 
 private:
     std::mutex mtx_info;
