@@ -82,7 +82,7 @@ public:
     fx3_dev_err_t reset();
     fx3_dev_err_t print_version();
 
-    //----------------------- Lattice control ------------------
+    //----------------------- Lattice control --------------------------
     virtual fx3_dev_err_t send16bitSPI_ECP5(uint8_t addr, uint8_t data);
     virtual fx3_dev_err_t read16bitSPI_ECP5(uint8_t addr, uint8_t* data);
     virtual fx3_dev_err_t sendECP5(uint8_t* buf, long len);

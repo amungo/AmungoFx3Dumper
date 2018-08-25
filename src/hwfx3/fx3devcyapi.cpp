@@ -39,8 +39,12 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
     StartParams.USBDevice = new CCyFX3Device();
     int boot = 0;
     int stream = 0;
+    if(log)
+        fprintf(stderr, "Enter in FX3DevCyAPI::init \n");
+
     fx3_dev_err_t res = scan( boot, stream );
     if ( res != FX3_ERR_OK ) {
+            fprintf(stderr, " Error to scan(boot, stream)");
         return res;
     }
 
@@ -51,6 +55,7 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
 
         FILE* f = fopen( firmwareFileName, "r" );
         if ( !f ) {
+            fprintf(stderr, "Error to open firmware file \n");
             return FX3_ERR_FIRMWARE_FILE_IO_ERROR;
         }
 
@@ -58,6 +63,7 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
             int retCode  = StartParams.USBDevice->DownloadFw((char*)firmwareFileName, FX3_FWDWNLOAD_MEDIA_TYPE::RAM);
 
             if ( retCode != FX3_FWDWNLOAD_ERROR_CODE::SUCCESS ) {
+                fprintf(stderr ,"Error to load firmware \n");
                 switch( retCode ) {
                     case INVALID_FILE:
                     case CORRUPT_FIRMWARE_IMAGE_FILE:
@@ -90,12 +96,14 @@ fx3_dev_err_t FX3DevCyAPI::init(const char *firmwareFileName, const char *additi
         StartParams.USBDevice = new CCyFX3Device();
         res = scan( boot, stream );
         if ( res != FX3_ERR_OK ) {
+            fprintf(stderr, "Error in second scan(boot, stream) \n");
             return res;
         }
     }
 
     res = prepareEndPoints();
     if ( res != FX3_ERR_OK ) {
+        fprintf(stderr, "Error in prepareEndPoints() \n");
         return res;
     }
 
@@ -163,6 +171,7 @@ void FX3DevCyAPI::startRead(DeviceDataHandlerIfce *handler) {
 void FX3DevCyAPI::stopRead() {
     StartParams.bStreaming = false;
     if ( xfer_thread.joinable() ) {
+        if ( log ) fprintf( stderr, "FX3DevCyAPI::stopRead(). xfer_thread.join()\n" );
         xfer_thread.join();
     }
     changeHandler( NULL );
@@ -246,7 +255,7 @@ fx3_dev_err_t FX3DevCyAPI::getReceiverRegValue(uint8_t addr, uint8_t &value) {
 }
 
 fx3_dev_err_t FX3DevCyAPI::putReceiverRegValue(uint8_t addr, uint8_t value) {
-    return send16bitSPI( value, addr );
+    return send16bitSPI_ECP5(addr, value);
 }
 
 fx3_dev_err_t FX3DevCyAPI::reset() {
@@ -367,6 +376,7 @@ fx3_dev_err_t FX3DevCyAPI::prepareEndPoints() {
 void FX3DevCyAPI::startTransferData(unsigned int EndPointInd, int PPX, int QueueSize, int TimeOut) {
     if(EndPointInd >= EndPointsParams.size())
         return;
+
     StartParams.CurEndPoint = EndPointsParams[EndPointInd];
     StartParams.PPX = PPX;
     StartParams.QueueSize = QueueSize;
@@ -390,6 +400,8 @@ void FX3DevCyAPI::startTransferData(unsigned int EndPointInd, int PPX, int Queue
 void FX3DevCyAPI::AbortXferLoop(StartDataTransferParams *Params, int pending, PUCHAR *buffers, CCyIsoPktInfo **isoPktInfos, PUCHAR *contexts, OVERLAPPED *inOvLap)
 {
     //EndPt->Abort(); - This is disabled to make sure that while application is doing IO and user unplug the device, this function hang the app.
+    if(log) fprintf(stderr, "FX3DevCyAPI::AbortXferLoop \n");
+
     long len = Params->EndPt->MaxPktSize * Params->PPX;
 
     for (int j=0; j< Params->QueueSize; j++)
@@ -400,7 +412,7 @@ void FX3DevCyAPI::AbortXferLoop(StartDataTransferParams *Params, int pending, PU
             {
                 Params->EndPt->Abort();
                 if (Params->EndPt->LastError == ERROR_IO_PENDING)
-                    WaitForSingleObject(inOvLap[j].hEvent,2000);
+                    WaitForSingleObject(inOvLap[j].hEvent,1000);
             }
 
             Params->EndPt->FinishDataXfer(buffers[j], len, &inOvLap[j], contexts[j]);
@@ -906,13 +918,14 @@ fx3_dev_err_t FX3DevCyAPI::read24bitSPI(unsigned short addr, unsigned char* data
 
 
 void FX3DevCyAPI::xfer_loop() {
-    if ( log ) fprintf( stderr, "FX3DevCyAPI::xfer_loop() started\n" );
+    if ( !log ) fprintf( stderr, "--- FX3DevCyAPI::xfer_loop() started ---\n");
     StartDataTransferParams* Params = &StartParams;
-    
-    
-    if(Params->EndPt->MaxPktSize==0)
+        
+    if(Params->EndPt->MaxPktSize==0) {
+        fprintf( stderr, "xfer_loop(): Params->EndPt->MaxPktSize==0 \n");
         return;
-    
+    }
+
     // Limit total transfer length to 4MByte
     long len = ((Params->EndPt->MaxPktSize) * Params->PPX);
     
@@ -971,7 +984,7 @@ void FX3DevCyAPI::xfer_loop() {
 
     // The infinite xfer loop.
     for (;Params->bStreaming;)
-    {
+    {        
         long rLen = len;	// Reset this each time through because
         // FinishDataXfer may modify it
 
@@ -1036,9 +1049,11 @@ void FX3DevCyAPI::xfer_loop() {
         i = (i + 1) % Params->QueueSize;
     }  // End of the infinite loop
 
+     if ( log ) fprintf(stderr, "--- FX3DevCyAPI::xfer_loop() Exit from xfer_loop ---\n");
+
     AbortXferLoop( Params, Params->QueueSize, buffers, isoPktInfos, contexts, inOvLap );
 
-    if ( log ) fprintf( stderr, "FX3DevCyAPI::xfer_loop() finished\n" );
+    if ( log ) fprintf( stderr, "--- FX3DevCyAPI::xfer_loop() finished ---\n" );
 }
 
 uint8_t FX3DevCyAPI::peek8(uint32_t register_address24) {

@@ -15,6 +15,7 @@
 #define CMD_ECP5_CHECK      ( 0xD2 )
 
 
+
 typedef struct FirmwareDescription_t {
 	uint32_t version;
 	uint8_t  reserved[ 28 ];
