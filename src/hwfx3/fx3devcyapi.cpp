@@ -257,11 +257,7 @@ fx3_dev_err_t FX3DevCyAPI::getReceiverRegValue(uint8_t addr, uint8_t &value) {
 }
 
 fx3_dev_err_t FX3DevCyAPI::putReceiverRegValue(uint8_t addr, uint8_t value) {
-<<<<<<< HEAD
     return send16bitSPI_ECP5(addr, value);
-=======
-    return send16bitSPI( addr, value );
->>>>>>> 6ecf2bbcb2f856a88ca9d99467b470becc53854b
 }
 
 fx3_dev_err_t FX3DevCyAPI::reset() {
@@ -864,7 +860,7 @@ fx3_dev_err_t FX3DevCyAPI::send24bitSPI(unsigned char data, unsigned short addr)
 {
     std::lock_guard<std::mutex> critical_section(this->mtx);
 
-    //if ( log ) fprintf( stderr, "[0x%03X] <= 0x%02X\n", addr, data );
+    if ( log ) fprintf( stderr, "[0x%03X] <= 0x%02X\n", addr, data );
 
     UCHAR buf[16];
     addr |= 0x8000;

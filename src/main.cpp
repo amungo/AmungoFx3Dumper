@@ -95,13 +95,8 @@ int main( int argn, const char** argv )
     dev = new FX3Dev( 2 * 1024 * 1024, 7 );
 #endif
 
-<<<<<<< HEAD
-    if ( dev->init(fximg.c_str(), ntcfg.c_str() ) != FX3_ERR_OK ) {
-        cerr << endl << "Problems with hardware or driver type (dev->init)" << endl;
-=======
     if ( dev->init(fximg.c_str(), 0/*ntcfg.c_str()*/ ) != FX3_ERR_OK ) {
         cerr << endl << "Problems with hardware or driver type" << endl;
->>>>>>> 6ecf2bbcb2f856a88ca9d99467b470becc53854b
         delete dev;
         return -1;
     }
@@ -224,11 +219,7 @@ int main( int argn, const char** argv )
                             break;
                         }
                     } while ( ( rd_val[0] & 0x01 ) == 0x01 && res == FX3_ERR_OK && poller_running );
-<<<<<<< HEAD
-                    //---cerr << " " << std::hex << (int)rd_val[0] << "--" << std::hex << (int)wr_val << endl; // !!!
-=======
-                    //--cerr << " " << std::hex << (int)rd_val[0] << "--" << std::hex << (int)wr_val << endl; // !!!
->>>>>>> 6ecf2bbcb2f856a88ca9d99467b470becc53854b
+                    //--- cerr << " " << std::hex << (int)rd_val[0] << "--" << std::hex << (int)wr_val << endl; // !!!
 
                     auto cur_time = chrono::system_clock::now();
                     auto time_from_start = cur_time - start_time;
