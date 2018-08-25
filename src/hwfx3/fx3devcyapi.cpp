@@ -176,6 +176,8 @@ void FX3DevCyAPI::stopRead() {
     }
     changeHandler( NULL );
     if ( log ) fprintf( stderr, "FX3DevCyAPI::stopRead() all done!\n" );
+
+    device_stop();
 }
 
 void FX3DevCyAPI::changeHandler(DeviceDataHandlerIfce *handler) {
@@ -255,7 +257,11 @@ fx3_dev_err_t FX3DevCyAPI::getReceiverRegValue(uint8_t addr, uint8_t &value) {
 }
 
 fx3_dev_err_t FX3DevCyAPI::putReceiverRegValue(uint8_t addr, uint8_t value) {
+<<<<<<< HEAD
     return send16bitSPI_ECP5(addr, value);
+=======
+    return send16bitSPI( addr, value );
+>>>>>>> 6ecf2bbcb2f856a88ca9d99467b470becc53854b
 }
 
 fx3_dev_err_t FX3DevCyAPI::reset() {

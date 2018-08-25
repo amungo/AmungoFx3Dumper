@@ -25,8 +25,9 @@ extern "C" {
 #include <mutex>
 #include <list>
 #include <vector>
+#include <memory>
 
-
+class SSPICore;
 
 /*
  * Find, opens and flash FX3 device.
@@ -72,17 +73,17 @@ public:
     virtual fx3_dev_err_t checkECP5();
     virtual fx3_dev_err_t csonECP5();
     virtual fx3_dev_err_t csoffECP5();
-    virtual fx3_dev_err_t send24bitSPI8bit(unsigned int data);
+    virtual fx3_dev_err_t send24bitSPI8bit(unsigned int _data);
     virtual fx3_dev_err_t device_start();
     virtual fx3_dev_err_t device_stop();
     virtual fx3_dev_err_t device_reset();
     virtual fx3_dev_err_t reset_nt1065();
-    virtual fx3_dev_err_t load1065Ctrlfile(const char* fwFileName, int lastaddr);
+    virtual fx3_dev_err_t load1065Ctrlfile(const char* _fwFileName, int _lastaddr);
     
 private:    
     const uint32_t VENDOR_ID = 0x04b4;
     const uint32_t DEV_PID_NO_FW_NEEDED = 0x00f1; // PID of device with already flashed firmware
-    const uint32_t DEV_PID_FOR_FW_LOAD  = 0x00f3; // PID of device without flashed firmware. This device must be flashed before use.
+    const uint32_t DEV_PID_FOR_FW_LOAD  =  0x00f0; // 0x00f3; // // @camry -- Удалить! PID of device without flashed firmware. This device must be flashed before use.
     
     const uint32_t MAX_UPLOAD_BLOCK_SIZE8 = 2048; // For firmware flashing.
     const uint8_t  CMD_FW_LOAD   = 0xA0;          // Vendor command for firmware flashing.
@@ -147,6 +148,7 @@ private:
     double size_tx_mb;
 
     FX3DevFwParser fw_parser;
+    std::shared_ptr<SSPICore> m_SSPICore;
 };
 
 
