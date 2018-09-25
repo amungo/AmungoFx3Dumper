@@ -928,8 +928,6 @@ void FX3Dev::stopRead() {
         for(uint32_t i = 0;i<buffers_count;i++) {
             libusb_cancel_transfer(transfers[i]);
         }
-        fprintf( stderr, "FX3Dev::stopRead() stopping read_thread...\n" );
-
         std::this_thread::sleep_for(std::chrono::milliseconds(DEV_DOWNLOAD_TIMEOUT_MS));
         
         event_loop_running = false;
@@ -940,7 +938,7 @@ void FX3Dev::stopRead() {
         }
         
         data_handler = NULL;
-        fprintf( stderr, "FX3Dev::stopRead() all done!\n" );    
+        if ( log ) fprintf( stderr, "FX3Dev::stopRead() all done!\n" );
     }
 }
 

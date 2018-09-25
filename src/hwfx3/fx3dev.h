@@ -25,6 +25,7 @@ extern "C" {
 #include <mutex>
 #include <list>
 #include <vector>
+#include <memory>
 
 class SSPICore;
 

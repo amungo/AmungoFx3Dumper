@@ -102,13 +102,13 @@ int main( int argn, const char** argv )
     }
 
     if (dev->init_fpga(ecp5alg.c_str(), ecp5data.c_str()) != FX3_ERR_OK) {
-        cerr << endl << "Problems with loading Lattice firmware" << endl;
+        cerr << endl << "Problems with loading Lattice firmware (dev->init_fpga)" << endl;
         delete dev;
         return -1;
     }
 
-    if(dev->load1065Ctrlfile(ntcfg.c_str(), 49) != FX3_ERR_OK) {
-        cerr << endl << "Problems with loading nt config file " << endl;
+    if(dev->load1065Ctrlfile(ntcfg.c_str(), 48) != FX3_ERR_OK) {
+        cerr << endl << "Problems with loading nt config file (dev->load1065Ctrlfile) " << endl;
         delete dev;
         return -1;
     }
@@ -127,10 +127,11 @@ int main( int argn, const char** argv )
     dev->startRead(nullptr);
 
     // This is temporary workaround for strange bug of 'odd launch'
-    std::this_thread::sleep_for(chrono::milliseconds(100));
+    std::this_thread::sleep_for(chrono::milliseconds(200));
     dev->stopRead();
-    std::this_thread::sleep_for(chrono::milliseconds(100));
+    std::this_thread::sleep_for(chrono::milliseconds(200));
     dev->startRead(nullptr);
+
 
     std::this_thread::sleep_for(chrono::milliseconds(1000));
 
@@ -189,7 +190,7 @@ int main( int argn, const char** argv )
         auto start_time = chrono::system_clock::now();
 
         poller = thread( [&]() {
-            FILE* flog = fopen( "regdump.txt", "w" );
+            //FILE* flog = fopen( "regdump.txt", "w" );
             while ( poller_running && device_is_ok ) {
                 uint8_t wr_val;
                 uint8_t rd_val[6];
@@ -218,7 +219,7 @@ int main( int argn, const char** argv )
                             break;
                         }
                     } while ( ( rd_val[0] & 0x01 ) == 0x01 && res == FX3_ERR_OK && poller_running );
-                    //--cerr << " " << std::hex << (int)rd_val[0] << "--" << std::hex << (int)wr_val << endl; // !!!
+                    //--- cerr << " " << std::hex << (int)rd_val[0] << "--" << std::hex << (int)wr_val << endl; // !!!
 
                     auto cur_time = chrono::system_clock::now();
                     auto time_from_start = cur_time - start_time;
@@ -239,16 +240,18 @@ int main( int argn, const char** argv )
                         break;
                     }
 
+ #if 0
                     fprintf( flog, "%8" PRIu64 " ", ms_from_start);
                     for ( int i = 0; i < 6; i++ ) {
                         fprintf( flog, "%02X ", rd_val[i] );
                         rd_val[i] = 0x00;
                     }
                     fprintf( flog, "\n" );
+#endif
                 }
 
             }
-            fclose(flog);
+//            fclose(flog);
             cerr << "Poller thread finished" << endl;
         });
 

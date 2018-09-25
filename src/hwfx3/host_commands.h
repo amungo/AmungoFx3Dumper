@@ -20,6 +20,7 @@
 #define CMD_SET_DAC         ( 0xD8 )
 
 
+
 typedef struct FirmwareDescription_t {
 	uint32_t version;
 	uint8_t  reserved[ 28 ];

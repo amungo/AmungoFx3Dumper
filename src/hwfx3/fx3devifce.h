@@ -16,7 +16,7 @@ public:
 
 class FX3DevIfce {
 public:
-    FX3DevIfce( bool logging = false ) : log( logging ){}
+    FX3DevIfce( bool logging = false) : log( logging ){}
     virtual ~FX3DevIfce(){}
 
     // Opens device and flash it if neccessary (set firmwareFileName to NULL to disable flashing)
