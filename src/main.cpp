@@ -20,7 +20,7 @@ int main( int argn, const char** argv )
 #endif
 
     cerr << "*** Amungo's dumper for nut4nt board ***" << endl << endl;
-    if ( argn != 8 ) {
+    if ( argn < 8 || argn > 9 ) {
         cerr << "Usage: "
              << "AmungoFx3Dumper"     << " "
              << "FX3_IMAGE"           << " "
@@ -30,6 +30,7 @@ int main( int argn, const char** argv )
              << " OUT_FILE | stdout " << " "
              << " SECONDS | inf"      << " "
              << "cypress | libusb"
+             << "[ SECONDS check_interval ]"
              << endl << endl;
 
         cerr << "Use 'stdout'' as a file name to direct signal to standart output stream" << endl;
@@ -53,7 +54,7 @@ int main( int argn, const char** argv )
 
     double seconds = 0.0;
     const double INF_SECONDS = 10.0 * 365.0 * 24.0 * 60.0 * 60.0;
-    if ( string(argv[4]) == string("inf") ) {
+    if ( string(argv[6]) == string("inf") ) {
         seconds = INF_SECONDS;
     } else {
         seconds = atof( argv[6] );
@@ -62,6 +63,11 @@ int main( int argn, const char** argv )
     std::string driver( argv[7] );
 
     bool useCypress = ( driver == string( "cypress" ) );
+
+    int dbg_timeout = 0;
+    if(argn == 9) {
+        dbg_timeout = stoi(argv[8]);
+    }
 
     cerr << "------------------------------" << endl;
     if ( seconds >= INF_SECONDS ) {
@@ -176,6 +182,7 @@ int main( int argn, const char** argv )
     StreamDumper* dumper = nullptr;
     int32_t iter_time_ms = 2000;
     thread poller;
+    thread err_checker;
     bool poller_running = true;
     bool device_is_ok = true;
     try {
@@ -255,6 +262,25 @@ int main( int argn, const char** argv )
             cerr << "Poller thread finished" << endl;
         });
 
+        if(dbg_timeout) {
+            printf("\nStart check errors thread. Check timeout: %d\n", dbg_timeout);
+
+            err_checker = thread( [&](int timeout) {
+                //int prev_overflow = 0;
+
+                while(poller_running && device_is_ok) {
+                    fx3_dev_debug_info_t info = dev->getDebugInfoFromBoard(false);
+                    /*if(info.overflows != prev_overflow || info.phy_errs != 0 || info.lnk_errs != 0)*/ {
+                        printf("\n---[request_num:%d ] FX3 overflow:%d, phy_err:%d, lnk_err:%d, phy_err_inc:%d, lnk_err_inc:%d ---\n", info.transfers,
+                               info.overflows, info.phy_errs, info.lnk_errs, info.phy_err_inc, info.lnk_err_inc);
+                        //prev_overflow = info.overflows;
+                    }
+
+                    this_thread::sleep_for(chrono::milliseconds(timeout*1000));
+                }
+            }, dbg_timeout);
+        }
+
         while ( device_is_ok ) {
             if ( bytes_to_dump ) {
                 cerr << "\r";
@@ -295,6 +321,10 @@ int main( int argn, const char** argv )
     poller_running = false;
     if ( poller.joinable() ) {
         poller.join();
+    }
+
+    if(dbg_timeout && err_checker.joinable()) {
+        err_checker.join();
     }
 
     delete dev;
