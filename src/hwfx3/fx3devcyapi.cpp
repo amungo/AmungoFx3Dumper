@@ -246,11 +246,11 @@ fx3_dev_debug_info_t FX3DevCyAPI::getDebugInfoFromBoard(bool ask_speed_only) {
 
         info.transfers   = uibuf[ 0 ];
         info.overflows   = uibuf[ 1 ];
-        info.phy_err_inc = uibuf[ 2 ];
-        info.lnk_err_inc = uibuf[ 3 ];
+        info.phy_errs    = uibuf[ 2 ];
+        info.lnk_errs    = uibuf[ 3 ];
         info.err_reg_hex = uibuf[ 4 ];
-        info.phy_errs    = uibuf[ 5 ];
-        info.lnk_errs    = uibuf[ 6 ];
+        info.phy_err_inc = uibuf[ 5 ];
+        info.lnk_err_inc = uibuf[ 6 ];
 
         info.size_tx_mb_inc = size_tx_mb;
         size_tx_mb = 0.0;
@@ -696,16 +696,21 @@ fx3_dev_err_t FX3DevCyAPI::device_start()
 
     CCyControlEndPoint* CtrlEndPt;
     CtrlEndPt = StartParams.USBDevice->ControlEndPt;
-    CtrlEndPt->Target = TGT_DEVICE;
-    CtrlEndPt->ReqType = REQ_VENDOR;
-    CtrlEndPt->Direction = DIR_TO_DEVICE;
-    CtrlEndPt->ReqCode = CMD_DEVICE_START;
-    CtrlEndPt->Value = 0;
-    CtrlEndPt->Index = 1;
-    long len = 16;
-    int success = CtrlEndPt->XferData(buf, len);
 
-    return success ? FX3_ERR_OK : FX3_ERR_CTRL_TX_FAIL;
+    if(CtrlEndPt) {
+        CtrlEndPt->Target = TGT_DEVICE;
+        CtrlEndPt->ReqType = REQ_VENDOR;
+        CtrlEndPt->Direction = DIR_TO_DEVICE;
+        CtrlEndPt->ReqCode = CMD_DEVICE_START;
+        CtrlEndPt->Value = 0;
+        CtrlEndPt->Index = 1;
+        long len = 16;
+        int success = CtrlEndPt->XferData(buf, len);
+
+        return success ? FX3_ERR_OK : FX3_ERR_CTRL_TX_FAIL;
+    }
+
+    return FX3_ERR_BAD_DEVICE;
 }
 
 fx3_dev_err_t FX3DevCyAPI::device_stop()
@@ -715,16 +720,22 @@ fx3_dev_err_t FX3DevCyAPI::device_stop()
 
     CCyControlEndPoint* CtrlEndPt;
     CtrlEndPt = StartParams.USBDevice->ControlEndPt;
-    CtrlEndPt->Target = TGT_DEVICE;
-    CtrlEndPt->ReqType = REQ_VENDOR;
-    CtrlEndPt->Direction = DIR_TO_DEVICE;
-    CtrlEndPt->ReqCode = CMD_DEVICE_STOP;
-    CtrlEndPt->Value = 0;
-    CtrlEndPt->Index = 1;
-    long len = 16;
-    int success = CtrlEndPt->XferData(buf, len);
 
-    return success ? FX3_ERR_OK : FX3_ERR_CTRL_TX_FAIL;
+    if(CtrlEndPt)
+    {
+        CtrlEndPt->Target = TGT_DEVICE;
+        CtrlEndPt->ReqType = REQ_VENDOR;
+        CtrlEndPt->Direction = DIR_TO_DEVICE;
+        CtrlEndPt->ReqCode = CMD_DEVICE_STOP;
+        CtrlEndPt->Value = 0;
+        CtrlEndPt->Index = 1;
+        long len = 16;
+        int success = CtrlEndPt->XferData(buf, len);
+
+        return success ? FX3_ERR_OK : FX3_ERR_CTRL_TX_FAIL;
+    }
+
+    return FX3_ERR_BAD_DEVICE;
 }
 
 fx3_dev_err_t FX3DevCyAPI::device_reset()
