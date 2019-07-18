@@ -10,6 +10,7 @@
 #define CMD_NT1065_RESET    ( 0xD7 )
 
 #define CMD_ECP5_RESET      ( 0xD0 )
+#define CMD_ECP5_OFF        ( 0xDA )
 #define CMD_REG_WRITE8      ( 0xD6 )
 #define CMD_REG_READ8       ( 0xD9 )
 #define CMD_ECP5_WRITE      ( 0xD1 )
