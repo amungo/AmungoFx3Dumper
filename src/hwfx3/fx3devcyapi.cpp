@@ -24,11 +24,11 @@ FX3DevCyAPI::~FX3DevCyAPI() {
     fprintf( stderr, "Reseting chip\n" );
 
 
-    if ( resetECP5() == FX3_ERR_OK) {
-        fprintf( stderr, "Going to reset lattice. Please wait\n" );
+    if ( switchoffECP5() == FX3_ERR_OK) {
+        fprintf( stderr, "Going to switch off lattice. Please wait\n" );
     }
     else {
-        fprintf( stderr, "__error__ LATTICE CHIP RESET failed\n" );
+        fprintf( stderr, "__error__ LATTICE CHIP SWITCH OFF failed\n" );
     }
 
     if ( device_reset() == FX3_ERR_OK ) {
@@ -601,6 +601,24 @@ fx3_dev_err_t FX3DevCyAPI::resetECP5()
     CtrlEndPt->ReqType = REQ_VENDOR;
     CtrlEndPt->Direction = DIR_FROM_DEVICE;
     CtrlEndPt->ReqCode = CMD_ECP5_RESET;
+    CtrlEndPt->Value = 0;
+    CtrlEndPt->Index = 1;
+    long len = 16;
+    int success = CtrlEndPt->XferData(dummybuf, len);
+
+    return (success & dummybuf[0]) ? FX3_ERR_OK : FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3DevCyAPI::switchoffECP5()
+{
+    UCHAR  dummybuf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+    CCyControlEndPoint* CtrlEndPt;
+    CtrlEndPt = StartParams.USBDevice->ControlEndPt;
+    CtrlEndPt->Target = TGT_DEVICE;
+    CtrlEndPt->ReqType = REQ_VENDOR;
+    CtrlEndPt->Direction = DIR_FROM_DEVICE;
+    CtrlEndPt->ReqCode = CMD_ECP5_OFF;
     CtrlEndPt->Value = 0;
     CtrlEndPt->Index = 1;
     long len = 16;
