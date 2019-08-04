@@ -45,6 +45,7 @@ public:
     virtual fx3_dev_err_t sendECP5(uint8_t* buf, long len) = 0;
     virtual fx3_dev_err_t recvECP5(uint8_t* buf, long len) = 0;
     virtual fx3_dev_err_t resetECP5() = 0;
+    virtual fx3_dev_err_t switchoffECP5() = 0;
     virtual fx3_dev_err_t checkECP5() = 0;
     virtual fx3_dev_err_t csonECP5() = 0;
     virtual fx3_dev_err_t csoffECP5() = 0;
