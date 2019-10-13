@@ -46,7 +46,7 @@ class SSPICore;
 class FX3Dev : public FX3DevIfce {
 public:
 
-    FX3Dev( size_t one_block_size8 = (3072 * 1250), uint32_t dev_buffers_count = 8 );
+    FX3Dev( size_t one_block_size8 = (3072 * 1250), uint32_t dev_buffers_count = 2);
     virtual ~FX3Dev();
 
     // **** overrides FX3DevIfce
