@@ -24,7 +24,7 @@ FX3DevCyAPI::~FX3DevCyAPI() {
     fprintf( stderr, "Reseting chip\n" );
 
 
-    if ( switchoffECP5() == FX3_ERR_OK) {
+    if ( resetECP5() == FX3_ERR_OK) {
         fprintf( stderr, "Going to switch off lattice. Please wait\n" );
     }
     else {
