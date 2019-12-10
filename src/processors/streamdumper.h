@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "sys/AsyncQueueHandler.h"
-#include "hwfx3/fx3devifce.h"
+#include "IFx3Device.h"
 
 enum DumperStatus_e {
     DS_PROCESS,
@@ -28,7 +28,7 @@ public:
     StreamDumper( const std::string& file_name, int64_t bytes_to_dump );
     ~StreamDumper();
 
-    void HandleDeviceData(void *data_pointer, size_t size_in_bytes);
+    void HandleDeviceData(void *data_pointer, unsigned int size_in_bytes);
 
     DumperStatus_e GetStatus();
     int64_t GetBytesToGo();

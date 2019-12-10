@@ -3,28 +3,29 @@ CONFIG += console c++11
 CONFIG -= app_bundle
 CONFIG -= qt
 
+unix: DEFINES += NO_CY_API
+
+
+INCLUDEPATH += ../lib
+
 SOURCES += main.cpp \
-    hwfx3/fx3dev.cpp \
-    hwfx3/fx3deverr.cpp \
-    hwfx3/fx3fwparser.cpp \
-    hwfx3/HexParser.cpp \
     processors/streamdumper.cpp \
     sys/NamedClass.cpp \
     sys/Runnable.cpp \
-    hwfx3/pointdrawer.cpp \
-    hwfx3/lattice/lfe5u_core.cpp \
-    hwfx3/lattice/lfe5u_hardware.cpp \
-    hwfx3/lattice/lfe5u_util.cpp
+    pointdrawer.cpp \
+    ../lib/FileSimDev.cpp \
+    ../lib/fx3devcyapi.cpp \
+    ../lib/fx3deverr.cpp \
+    ../lib/fx3devifce.cpp \
+    ../lib/fx3fwparser.cpp \
+    ../lib/fx3tuner.cpp \
+    ../lib/FX3Dev.cpp \
+    ../lib/lattice/lfe5u_core.cpp \
+    ../lib/lattice/lfe5u_hardware.cpp \
+    ../lib/lattice/lfe5u_util.cpp \
+    ../lib/Fx3Factory.cpp
 
 HEADERS += \
-    hwfx3/fx3dev.h \
-    hwfx3/fx3devcyapi.h \
-    hwfx3/fx3devdebuginfo.h \
-    hwfx3/fx3deverr.h \
-    hwfx3/fx3devifce.h \
-    hwfx3/fx3fwparser.h \
-    hwfx3/HexParser.h \
-    hwfx3/libusb.h \
     processors/streamdumper.h \
     sys/AsyncQueueHandler.h \
     sys/BlockQueue.h \
@@ -32,25 +33,38 @@ HEADERS += \
     sys/NamedClass.h \
     sys/Runnable.h \
     sys/SingleEvent.h \
-    hwfx3/pointdrawer.h \
-    hwfx3/host_commands.h \
-    hwfx3/lattice/lfe5u_core.h \
-    hwfx3/lattice/lfe5u_debug.h \
-    hwfx3/lattice/lfe5u_hardware.h \
-    hwfx3/lattice/lfe5u_opcode.h \
-    hwfx3/lattice/lfe5u_util.h
+    pointdrawer.h \
+    ../lib/devioifce.h \
+    ../lib/FileSimDev.h \
+    ../lib/fx3commands.h \
+    ../lib/fx3config.h \
+    ../lib/fx3devcyapi.h \
+    ../lib/fx3devdebuginfo.h \
+    ../lib/fx3devdrvtype.h \
+    ../lib/fx3deverr.h \
+    ../lib/fx3devifce.h \
+    ../lib/fx3fwparser.h \
+    ../lib/fx3tuner.h \
+    ../lib/FX3Dev.h \
+    ../lib/libusb.h \
+    ../lib/lattice/lfe5u_core.h \
+    ../lib/lattice/lfe5u_debug.h \
+    ../lib/lattice/lfe5u_hardware.h \
+    ../lib/lattice/lfe5u_opcode.h \
+    ../lib/lattice/lfe5u_util.h \
+    ../lib/cy_inc/CyAPI.h \
+    ../lib/cy_inc/cyioctl.h \
+    ../lib/cy_inc/CyUSB30_def.h \
+    ../lib/cy_inc/usb100.h \
+    ../lib/cy_inc/usb200.h \
+    ../lib/cy_inc/UsbdStatus.h \
+    ../lib/cy_inc/VersionNo.h \
+    ../lib/IFx3Device.h \
+    ../lib/Fx3Factory.h
 
-win32: SOURCES += \
-        hwfx3/fx3devcyapi.cpp
+win32: SOURCES +=
 
 win32: HEADERS += \
-        hwfx3/cy_inc/CyAPI.h \
-        hwfx3/cy_inc/cyioctl.h \
-        hwfx3/cy_inc/CyUSB30_def.h \
-        hwfx3/cy_inc/usb100.h \
-        hwfx3/cy_inc/usb200.h \
-        hwfx3/cy_inc/UsbdStatus.h \
-        hwfx3/cy_inc/VersionNo.h \
 
 
 

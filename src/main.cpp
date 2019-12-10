@@ -2,10 +2,11 @@
 #include <chrono>
 #include <inttypes.h>
 
-#include "hwfx3/fx3dev.h"
+#include "IFx3Device.h"
+#include "Fx3Factory.h"
 
 #ifdef WIN32
-#include "hwfx3/fx3devcyapi.h"
+#include "fx3devcyapi.h"
 #endif
 
 #include "processors/streamdumper.h"
@@ -83,13 +84,13 @@ int main( int argn, const char** argv )
     cerr << "------------------------------" << endl;
 
     cerr << "Wait while device is being initing..." << endl;
-    FX3DevIfce* dev = nullptr;
+    IFx3Device* dev = nullptr;
 
 #ifdef WIN32
     if ( useCypress ) {
-        dev = new FX3DevCyAPI();
+        dev = Fx3DeviceFactory::CreateInstance(CYAPI_DEVICE_TYPE,  2 * 1024 * 1024, 7);
     } else {
-        dev = new FX3Dev( 2 * 1024 * 1024, 7 );
+        dev = Fx3DeviceFactory::CreateInstance(LIBUSB_DEVICE_TYPE, 2 * 1024 * 1024, 7);
     }
 #else
     if ( useCypress ) {
@@ -98,29 +99,31 @@ int main( int argn, const char** argv )
              << " Please check if you use correct scripts!"
              << endl;
     }
-    dev = new FX3Dev( 2 * 1024 * 1024, 7 );
+    //dev = new FX3Dev( 2 * 1024 * 1024, 7 );
+    dev = Fx3DeviceFactory::CreateInstance(LIBUSB_DEVICE_TYPE, 2 * 1024 * 1024, 7);
+
 #endif
 
     if ( dev->init(fximg.c_str(), 0/*ntcfg.c_str()*/ ) != FX3_ERR_OK ) {
         cerr << endl << "Problems with hardware or driver type" << endl;
-        delete dev;
+        dev->Release();
         return -1;
     }
 
     if (dev->init_fpga(ecp5alg.c_str(), ecp5data.c_str()) != FX3_ERR_OK) {
         cerr << endl << "Problems with loading Lattice firmware (dev->init_fpga)" << endl;
-        delete dev;
+        dev->Release();
         return -1;
     }
 
     if(dev->load1065Ctrlfile(ntcfg.c_str(), 48) != FX3_ERR_OK) {
         cerr << endl << "Problems with loading nt config file (dev->load1065Ctrlfile) " << endl;
-        delete dev;
+        dev->Release();
         return -1;
     }
 
     cerr << "Device was inited." << endl << endl;
-    dev->log = false;
+    //dev->log = false;
 
     std::this_thread::sleep_for(chrono::milliseconds(1000));
 
@@ -318,6 +321,8 @@ int main( int argn, const char** argv )
 
     dev->changeHandler(nullptr);
 
+    dev->stopRead();
+
     poller_running = false;
     if ( poller.joinable() ) {
         poller.join();
@@ -327,7 +332,7 @@ int main( int argn, const char** argv )
         err_checker.join();
     }
 
-    delete dev;
+    dev->Release();
     delete dumper;
 
     return 0;
