@@ -1,0 +1,279 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Файлы заголовков">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Файлы ресурсов">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Исходные файлы\sys">
+      <UniqueIdentifier>{179d3637-09f7-44a2-8460-b9fff8b06e6a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\sys">
+      <UniqueIdentifier>{df94b219-64be-4c71-afb2-fb6b5b4f305b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\processors">
+      <UniqueIdentifier>{faf61036-dca3-471c-8cb5-06bc6ef9c835}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\processors">
+      <UniqueIdentifier>{24ecacdc-19ff-472b-855b-f9e1b4ad6272}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\hwfx3">
+      <UniqueIdentifier>{a2a0371c-f1b1-400b-b4e4-bfd46bfe0ddb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\hwfx3">
+      <UniqueIdentifier>{3393ff52-6033-4bfd-9acb-f79acd95412b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\hwfx3\cy_inc">
+      <UniqueIdentifier>{d134b800-2bf6-4668-8cd3-8a99c98b6e11}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\lib">
+      <UniqueIdentifier>{fbd4b4bf-6ba0-48db-b83a-f2570bf9400b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\lib">
+      <UniqueIdentifier>{7a9e1c54-0f7d-4fbb-b9d5-f3eaddb28750}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\lib\cy_inc">
+      <UniqueIdentifier>{075fd2f1-6a3c-4d0d-bcf3-35b5d62ffa9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Файлы заголовков\lib\lattice">
+      <UniqueIdentifier>{9c69c628-2fef-4b3e-a393-762398824d88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Исходные файлы\lib\lattice">
+      <UniqueIdentifier>{e4e1ab75-d14b-4bd0-8cec-4b599fdfe587}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AmungoFx3Dumper.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="sys\Runnable.cpp">
+      <Filter>Исходные файлы\sys</Filter>
+    </ClCompile>
+    <ClCompile Include="sys\NamedClass.cpp">
+      <Filter>Исходные файлы\sys</Filter>
+    </ClCompile>
+    <ClCompile Include="processors\streamdumper.cpp">
+      <Filter>Исходные файлы\processors</Filter>
+    </ClCompile>
+    <ClCompile Include="hwfx3\fx3dev.cpp">
+      <Filter>Исходные файлы\hwfx3</Filter>
+    </ClCompile>
+    <ClCompile Include="hwfx3\fx3devcyapi.cpp">
+      <Filter>Исходные файлы\hwfx3</Filter>
+    </ClCompile>
+    <ClCompile Include="hwfx3\fx3deverr.cpp">
+      <Filter>Исходные файлы\hwfx3</Filter>
+    </ClCompile>
+    <ClCompile Include="hwfx3\fx3fwparser.cpp">
+      <Filter>Исходные файлы\hwfx3</Filter>
+    </ClCompile>
+    <ClCompile Include="hwfx3\HexParser.cpp">
+      <Filter>Исходные файлы\hwfx3</Filter>
+    </ClCompile>
+    <ClCompile Include="hwfx3\pointdrawer.cpp">
+      <Filter>Исходные файлы\hwfx3</Filter>
+    </ClCompile>
+    <ClCompile Include="pointdrawer.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\FileSimDev.cpp">
+      <Filter>Исходные файлы\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\FX3Dev.cpp">
+      <Filter>Исходные файлы\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\fx3devcyapi.cpp">
+      <Filter>Исходные файлы\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\fx3deverr.cpp">
+      <Filter>Исходные файлы\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\fx3devifce.cpp">
+      <Filter>Исходные файлы\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\Fx3Factory.cpp">
+      <Filter>Исходные файлы\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\fx3fwparser.cpp">
+      <Filter>Исходные файлы\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\fx3tuner.cpp">
+      <Filter>Исходные файлы\lib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lattice\lfe5u_util.cpp">
+      <Filter>Исходные файлы\lib\lattice</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lattice\lfe5u_core.cpp">
+      <Filter>Исходные файлы\lib\lattice</Filter>
+    </ClCompile>
+    <ClCompile Include="..\lib\lattice\lfe5u_hardware.cpp">
+      <Filter>Исходные файлы\lib\lattice</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="sys\SingleEvent.h">
+      <Filter>Файлы заголовков\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="sys\BlockQueue.h">
+      <Filter>Файлы заголовков\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="sys\MessageReceiverIfce.h">
+      <Filter>Файлы заголовков\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="sys\NamedClass.h">
+      <Filter>Файлы заголовков\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="sys\Runnable.h">
+      <Filter>Файлы заголовков\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="processors\streamdumper.h">
+      <Filter>Файлы заголовков\processors</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\fx3dev.h">
+      <Filter>Файлы заголовков\hwfx3</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\fx3devcyapi.h">
+      <Filter>Файлы заголовков\hwfx3</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\fx3devdebuginfo.h">
+      <Filter>Файлы заголовков\hwfx3</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\fx3deverr.h">
+      <Filter>Файлы заголовков\hwfx3</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\fx3devifce.h">
+      <Filter>Файлы заголовков\hwfx3</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\fx3fwparser.h">
+      <Filter>Файлы заголовков\hwfx3</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\HexParser.h">
+      <Filter>Файлы заголовков\hwfx3</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\host_commands.h">
+      <Filter>Файлы заголовков\hwfx3</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\libusb.h">
+      <Filter>Файлы заголовков\hwfx3</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\pointdrawer.h">
+      <Filter>Файлы заголовков\hwfx3</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\cy_inc\CyAPI.h">
+      <Filter>Файлы заголовков\hwfx3\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\cy_inc\cyioctl.h">
+      <Filter>Файлы заголовков\hwfx3\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\cy_inc\CyUSB30_def.h">
+      <Filter>Файлы заголовков\hwfx3\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\cy_inc\usb100.h">
+      <Filter>Файлы заголовков\hwfx3\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\cy_inc\usb200.h">
+      <Filter>Файлы заголовков\hwfx3\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\cy_inc\UsbdStatus.h">
+      <Filter>Файлы заголовков\hwfx3\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="hwfx3\cy_inc\VersionNo.h">
+      <Filter>Файлы заголовков\hwfx3\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="sys\AsyncQueueHandler.h">
+      <Filter>Файлы заголовков\sys</Filter>
+    </ClInclude>
+    <ClInclude Include="pointdrawer.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\devioifce.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\FileSimDev.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\fx3commands.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\fx3config.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\FX3Dev.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\fx3devcyapi.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\fx3devdebuginfo.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\fx3devdrvtype.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\fx3deverr.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\fx3devifce.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\Fx3Factory.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\fx3fwparser.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\fx3tuner.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\IFx3Device.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\libusb.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\cy_inc\CyAPI.h">
+      <Filter>Файлы заголовков\lib\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\cy_inc\cyioctl.h">
+      <Filter>Файлы заголовков\lib\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\cy_inc\CyUSB30_def.h">
+      <Filter>Файлы заголовков\lib\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\cy_inc\usb100.h">
+      <Filter>Файлы заголовков\lib\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\cy_inc\usb200.h">
+      <Filter>Файлы заголовков\lib\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\cy_inc\UsbdStatus.h">
+      <Filter>Файлы заголовков\lib\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\cy_inc\VersionNo.h">
+      <Filter>Файлы заголовков\lib\cy_inc</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\lattice\lfe5u_core.h">
+      <Filter>Файлы заголовков\lib\lattice</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\lattice\lfe5u_debug.h">
+      <Filter>Файлы заголовков\lib\lattice</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\lattice\lfe5u_hardware.h">
+      <Filter>Файлы заголовков\lib\lattice</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\lattice\lfe5u_opcode.h">
+      <Filter>Файлы заголовков\lib\lattice</Filter>
+    </ClInclude>
+    <ClInclude Include="..\lib\lattice\lfe5u_util.h">
+      <Filter>Файлы заголовков\lib\lattice</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

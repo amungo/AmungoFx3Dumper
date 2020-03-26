@@ -13,6 +13,14 @@
 
 using namespace std;
 
+#pragma comment(lib, "legacy_stdio_definitions.lib")
+#ifdef __cplusplus
+FILE iob[] = { *stdin, *stdout, *stderr };
+extern "C" {
+    FILE* __cdecl _iob(void) { return iob; }
+}
+#endif
+
 int main( int argn, const char** argv )
 {
 #ifndef WIN32
