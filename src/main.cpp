@@ -2,15 +2,18 @@
 #include <chrono>
 #include <inttypes.h>
 
-#include "hwfx3/fx3dev.h"
+#include "IFx3Device.h"
+#include "Fx3Factory.h"
 
 #ifdef WIN32
-#include "hwfx3/fx3devcyapi.h"
+#include "fx3devcyapi.h"
 #endif
 
 #include "processors/streamdumper.h"
 
 using namespace std;
+
+#define USB_PACKET_SIZE 16384
 
 int main( int argn, const char** argv )
 {
@@ -20,14 +23,15 @@ int main( int argn, const char** argv )
 #endif
 
     cerr << "*** Amungo's dumper for nut4nt board ***" << endl << endl;
-    if ( argn != 6 ) {
+    if ( argn < 6 || argn > 9 ) {
         cerr << "Usage: "
              << "AmungoFx3Dumper"     << " "
              << "FX3_IMAGE"           << " "
              << "NT1065_CFG"          << " "
+             << "FPGA bitstream"         << " "
              << " OUT_FILE | stdout " << " "
              << " SECONDS | inf"      << " "
-             << "cypress | libusb"
+             << "[ SECONDS check_interval ]"
              << endl << endl;
 
         cerr << "Use 'stdout'' as a file name to direct signal to standart output stream" << endl;
@@ -45,19 +49,31 @@ int main( int argn, const char** argv )
 
     std::string fximg( argv[1] );
     std::string ntcfg( argv[2] );
-    std::string dumpfile( argv[3] );
+    std::string bitstream( argv[3] );
+    std::string dumpfile( argv[4] );
 
     double seconds = 0.0;
     const double INF_SECONDS = 10.0 * 365.0 * 24.0 * 60.0 * 60.0;
-    if ( string(argv[4]) == string("inf") ) {
+    if ( string(argv[5]) == string("inf") ) {
         seconds = INF_SECONDS;
     } else {
-        seconds = atof( argv[4] );
+        seconds = atof( argv[5] );
     }
 
-    std::string driver( argv[5] );
 
-    bool useCypress = ( driver == string( "cypress" ) );
+
+#ifdef WIN32
+    std::string driver( "Cypress");
+    bool useCypress = true;
+#else
+    std::string driver( "libusb");
+    bool useCypress = false;
+#endif
+
+    int dbg_timeout = 0;
+    if(argn == 7) {
+        dbg_timeout = stoi(argv[6]);
+    }
 
     cerr << "------------------------------" << endl;
     if ( seconds >= INF_SECONDS ) {
@@ -68,18 +84,15 @@ int main( int argn, const char** argv )
         cerr << "No dumping - just testing!" << endl;
     }
     cerr << "Using fx3 image from '" << fximg << "' and nt1065 config from '" << ntcfg << "'" << endl;
+    cerr << "Using Xilinx bitstream from '" << bitstream << "'"  << endl;
     cerr << "You choose to use __" << ( useCypress ? "cypress" : "libusb" ) << "__ driver" << endl;
     cerr << "------------------------------" << endl;
 
     cerr << "Wait while device is being initing..." << endl;
-    FX3DevIfce* dev = nullptr;
+    IFx3Device* dev = nullptr;
 
 #ifdef WIN32
-    if ( useCypress ) {
-        dev = new FX3DevCyAPI();
-    } else {
-        dev = new FX3Dev( 2 * 1024 * 1024, 7 );
-    }
+    dev = Fx3DeviceFactory::CreateInstance(CYAPI_DEVICE_TYPE,  USB_PACKET_SIZE * 16, 8);
 #else
     if ( useCypress ) {
         cerr << endl
@@ -87,31 +100,49 @@ int main( int argn, const char** argv )
              << " Please check if you use correct scripts!"
              << endl;
     }
-    dev = new FX3Dev( 2 * 1024 * 1024, 7 );
+    dev = Fx3DeviceFactory::CreateInstance(LIBUSB_DEVICE_TYPE, USB_PACKET_SIZE * 64, 4);
 #endif
 
-    if ( dev->init(fximg.c_str(), ntcfg.c_str() ) != FX3_ERR_OK ) {
+    if ( dev->init(fximg.c_str(), 0/*ntcfg.c_str()*/ ) != FX3_ERR_OK ) {
         cerr << endl << "Problems with hardware or driver type" << endl;
+        dev->Release();
         return -1;
     }
+
+    if (dev->init_fpga(bitstream.c_str()) != FX3_ERR_OK) {
+        cerr << endl << "Problems with loading Xilinx firmware (dev->init_fpga)" << endl;
+        dev->Release();
+        return -1;
+    }
+
+    if(dev->load1065Ctrlfile(ntcfg.c_str(), 48) != FX3_ERR_OK) {
+        cerr << endl << "Problems with loading nt config file (dev->load1065Ctrlfile) " << endl;
+        dev->Release();
+        return -1;
+    }
+
     cerr << "Device was inited." << endl << endl;
-    dev->log = false;
+    //dev->log = false;
 
     std::this_thread::sleep_for(chrono::milliseconds(1000));
 
+#if 0
     cerr << "Determinating sample rate";
     if ( !seconds ) {
         cerr << " and USB noise level...";
     }
+#endif
+
     cerr << endl;
 
     dev->startRead(nullptr);
 
     // This is temporary workaround for strange bug of 'odd launch'
-    std::this_thread::sleep_for(chrono::milliseconds(100));
+    std::this_thread::sleep_for(chrono::milliseconds(200));
     dev->stopRead();
-    std::this_thread::sleep_for(chrono::milliseconds(100));
+    std::this_thread::sleep_for(chrono::milliseconds(200));
     dev->startRead(nullptr);
+
 
     std::this_thread::sleep_for(chrono::milliseconds(1000));
 
@@ -153,9 +184,11 @@ int main( int argn, const char** argv )
     } else {
         cerr << "Start testing USB transfer" << endl;
     }
+
     StreamDumper* dumper = nullptr;
     int32_t iter_time_ms = 2000;
     thread poller;
+    thread err_checker;
     bool poller_running = true;
     bool device_is_ok = true;
     try {
@@ -169,9 +202,8 @@ int main( int argn, const char** argv )
 
         auto start_time = chrono::system_clock::now();
 
-
         poller = thread( [&]() {
-            FILE* flog = fopen( "regdump.txt", "w" );
+            //FILE* flog = fopen( "regdump.txt", "w" );
             while ( poller_running && device_is_ok ) {
                 uint8_t wr_val;
                 uint8_t rd_val[6];
@@ -191,7 +223,7 @@ int main( int argn, const char** argv )
                     do {
                         this_thread::sleep_for(chrono::microseconds(500));
                         res = dev->getReceiverRegValue( 0x05, rd_val[0] );
-                        if ( rd_val[0] == 0xff || res != FX3_ERR_OK ) {
+                        if ( /*rd_val[0] == 0xff || @camry*/ res != FX3_ERR_OK ) {
                             cerr << "Critical error while registry reading. Is your device is broken?" << endl
                                  << "Try do detach submodule and attach it again" << endl;
                             this_thread::sleep_for(chrono::milliseconds(100));
@@ -200,6 +232,7 @@ int main( int argn, const char** argv )
                             break;
                         }
                     } while ( ( rd_val[0] & 0x01 ) == 0x01 && res == FX3_ERR_OK && poller_running );
+                    //--- cerr << " " << std::hex << (int)rd_val[0] << "--" << std::hex << (int)wr_val << endl; // !!!
 
                     auto cur_time = chrono::system_clock::now();
                     auto time_from_start = cur_time - start_time;
@@ -220,18 +253,39 @@ int main( int argn, const char** argv )
                         break;
                     }
 
+ #if 0
                     fprintf( flog, "%8" PRIu64 " ", ms_from_start);
                     for ( int i = 0; i < 6; i++ ) {
                         fprintf( flog, "%02X ", rd_val[i] );
                         rd_val[i] = 0x00;
                     }
                     fprintf( flog, "\n" );
+#endif
                 }
 
             }
-            fclose(flog);
+//            fclose(flog);
             cerr << "Poller thread finished" << endl;
         });
+
+        if(dbg_timeout) {
+            printf("\nStart check errors thread. Check timeout: %d\n", dbg_timeout);
+
+            err_checker = thread( [&](int timeout) {
+                //int prev_overflow = 0;
+
+                while(poller_running && device_is_ok) {
+                    fx3_dev_debug_info_t info = dev->getDebugInfoFromBoard(false);
+                    /*if(info.overflows != prev_overflow || info.phy_errs != 0 || info.lnk_errs != 0)*/ {
+                        printf("\n---[request_num:%d ] FX3 overflow:%d, phy_err:%d, lnk_err:%d, phy_err_inc:%d, lnk_err_inc:%d ---\n", info.transfers,
+                               info.overflows, info.phy_errs, info.lnk_errs, info.phy_err_inc, info.lnk_err_inc);
+                        //prev_overflow = info.overflows;
+                    }
+
+                    this_thread::sleep_for(chrono::milliseconds(timeout*1000));
+                }
+            }, dbg_timeout);
+        }
 
         while ( device_is_ok ) {
             if ( bytes_to_dump ) {
@@ -270,12 +324,18 @@ int main( int argn, const char** argv )
 
     dev->changeHandler(nullptr);
 
+    dev->stopRead();
+
     poller_running = false;
     if ( poller.joinable() ) {
         poller.join();
     }
 
-    delete dev;
+    if(dbg_timeout && err_checker.joinable()) {
+        err_checker.join();
+    }
+
+    dev->Release();
     delete dumper;
 
     return 0;

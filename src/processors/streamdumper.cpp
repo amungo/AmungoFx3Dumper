@@ -32,7 +32,7 @@ StreamDumper::~StreamDumper() {
     }
 }
 
-void StreamDumper::HandleDeviceData(void *data_pointer, size_t size_in_bytes)
+void StreamDumper::HandleDeviceData(void *data_pointer, unsigned int size_in_bytes)
 {
     char* src = ( char* ) data_pointer;
     std::vector<char>* msg = new std::vector<char>( src, src + size_in_bytes );
