@@ -122,6 +122,64 @@ int main( int argn, const char** argv )
     }
 
     cerr << "Device was inited." << endl << endl;
+
+    // Read ADXL ID
+    {
+        fx3_dev_err_t ret;
+        unsigned char dev_id = 0;
+        unsigned char dev_mst = 0;
+        unsigned char part_id = 0;
+        unsigned char rev_id = 0;
+
+        ret = dev->readADXL(0x00, &dev_id);
+        if(ret != FX3_ERR_OK)
+            cerr << "!!! Error dev->readADXL (0x00) !!!\n";
+        ret = dev->readADXL(0x01, &dev_mst);
+        if(ret != FX3_ERR_OK)
+            cerr << "!!! Error dev->readADXL (0x01) !!!\n";
+        ret = dev->readADXL(0x02, &part_id);
+        if(ret != FX3_ERR_OK)
+            cerr << "!!! Error dev->readADXL (0x02) !!!\n";
+        ret = dev->readADXL(0x03, &rev_id);
+        if(ret != FX3_ERR_OK)
+            cerr << "!!! Error dev->readADXL (0x03) !!!\n";
+
+        printf("---- dev_id: %x dev_mst: %x dev_mst: %x  part_id %x ----\n", dev_id, dev_mst, part_id, rev_id);
+
+        ret = dev->readADXL(0x1E, &dev_id);
+        if(ret != FX3_ERR_OK)
+            cerr << "!!! Error dev->readADXL (0x1E) !!!\n";
+        printf("read from 0x1e: %x  ---\n", dev_id);
+
+        ret = dev->writeADXL(0x1E, 0x1a);
+        if(ret != FX3_ERR_OK)
+            cerr << "!!! Error dev->writeADXL (0x1E) !!!\n";
+        printf("write tp 0x1e: %x  ---\n", 0x1a);
+
+        dev_id = 0;
+        ret = dev->readADXL(0x1E, &dev_id);
+        if(ret != FX3_ERR_OK)
+            cerr << "!!! Error dev->readADXL (0x1E) !!!\n";
+        printf("read2 from 0x1e: %x  ---\n", dev_id);
+
+        //-------------------------------------------------------------------------
+        cout << " Befor read Dev ID. Press key \n";
+        getchar();
+        ret = dev->read8bitSPI(0x00, &dev_id);
+        if(ret != FX3_ERR_OK)
+            cerr << "!!! Error dev->read8bitSPI (0x00) !!!\n";
+
+        cout << " Befor read Tech info. Press key \n";
+        getchar();
+        ret = dev->read8bitSPI(0x01, &dev_mst);
+        if(ret != FX3_ERR_OK)
+            cerr << "!!! Error dev->readADXL (0x01) !!!\n";
+
+        printf("---- Chip number: %x Tec inf: %x ----\n", dev_id, dev_mst);
+        //-------------------------------------------------------------------------
+
+    }
+
     //dev->log = false;
 
     std::this_thread::sleep_for(chrono::milliseconds(1000));
@@ -203,7 +261,7 @@ int main( int argn, const char** argv )
         auto start_time = chrono::system_clock::now();
 
         poller = thread( [&]() {
-            //FILE* flog = fopen( "regdump.txt", "w" );
+            //FILE* flog = fopen( "regdump.txt", "w" ); //
             while ( poller_running && device_is_ok ) {
                 uint8_t wr_val;
                 uint8_t rd_val[6];
@@ -223,7 +281,7 @@ int main( int argn, const char** argv )
                     do {
                         this_thread::sleep_for(chrono::microseconds(500));
                         res = dev->getReceiverRegValue( 0x05, rd_val[0] );
-                        if ( /*rd_val[0] == 0xff || @camry*/ res != FX3_ERR_OK ) {
+                        if ( rd_val[0] == 0xff || res != FX3_ERR_OK ) {
                             cerr << "Critical error while registry reading. Is your device is broken?" << endl
                                  << "Try do detach submodule and attach it again" << endl;
                             this_thread::sleep_for(chrono::milliseconds(100));
@@ -254,7 +312,7 @@ int main( int argn, const char** argv )
                     }
 
  #if 0
-                    fprintf( flog, "%8" PRIu64 " ", ms_from_start);
+                    //fprintf( flog, "%8" PRIu64 " ", ms_from_start);
                     for ( int i = 0; i < 6; i++ ) {
                         fprintf( flog, "%02X ", rd_val[i] );
                         rd_val[i] = 0x00;
@@ -264,7 +322,7 @@ int main( int argn, const char** argv )
                 }
 
             }
-//            fclose(flog);
+            //fclose(flog);
             cerr << "Poller thread finished" << endl;
         });
 

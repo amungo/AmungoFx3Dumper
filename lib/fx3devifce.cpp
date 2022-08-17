@@ -62,6 +62,14 @@ fx3_dev_err_t FX3DevIfce::init_fpga(const char* bitFileName)
     retCode = resetECP5();
     if(retCode == FX3_ERR_OK)
     {
+        retCode = set_spi_clock(25000);
+        if(retCode != FX3_ERR_OK) {
+            fprintf( stderr, "set_spi_clock(25000KHz) ret code %d\n", retCode );
+            delete [] fw_buf;
+            return retCode;
+        }
+
+
         long len = 512;
         char* tbuff = fw_buf;
         for (; written < fw_size8; tbuff += len)
@@ -77,6 +85,11 @@ fx3_dev_err_t FX3DevIfce::init_fpga(const char* bitFileName)
         }
     }
     delete [] fw_buf;
+
+    retCode = set_spi_clock(1000);
+    if(retCode != FX3_ERR_OK) {
+        fprintf( stderr, "set_spi_clock(1000KHz) ret code %d\n", retCode );
+    }
 
     retCode = checkECP5();
     if(retCode == FX3_ERR_OK)
@@ -352,7 +365,17 @@ fx3_dev_err_t FX3DevIfce::send8bitSPI(uint8_t data, uint8_t addr)
     return FX3_ERR_CTRL_TX_FAIL;
 }
 
-fx3_dev_err_t FX3DevIfce::read8bitSPI(uint8_t addr, uint8_t* data)
+fx3_dev_err_t FX3DevIfce::read8bitSPI(uint8_t addr, uint8_t* data, uint8_t chip)
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3DevIfce::writeADXL(uint8_t data, uint8_t addr)
+{
+    return FX3_ERR_CTRL_TX_FAIL;
+}
+
+fx3_dev_err_t FX3DevIfce::readADXL(uint8_t addr, uint8_t* data)
 {
     return FX3_ERR_CTRL_TX_FAIL;
 }
@@ -457,6 +480,11 @@ fx3_dev_err_t FX3DevIfce::load1065Ctrlfile(const char* fwFileName, int lastaddr)
     fclose(pFile);
 
     return retCode;
+}
+
+fx3_dev_err_t FX3DevIfce::set_spi_clock(uint16_t _clock)
+{
+    return FX3_ERR_CTRL_TX_FAIL;
 }
 
 

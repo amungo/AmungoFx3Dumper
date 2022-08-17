@@ -401,7 +401,7 @@ fx3_dev_err_t FX3Dev::txControlFromDevice(uint8_t* dest, uint32_t size8 , uint8_
     uint8_t bmRequestType = LIBUSB_RECIPIENT_DEVICE | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_ENDPOINT_IN;
     uint8_t bRequest = cmd;
     uint32_t timeout_ms = DEV_UPLOAD_TIMEOUT_MS;
-    
+
     int res = libusb_control_transfer( device_handle, bmRequestType, bRequest, wValue, wIndex, dest, size8, timeout_ms );
     if ( res != ( int ) size8 ) {
         fprintf( stderr, "FX3Dev::transferDataFromDevice() error %d %s\n", res, libusb_error_name(res) );
@@ -490,7 +490,7 @@ fx3_dev_debug_info_t FX3Dev::getDebugInfoFromBoard(bool ask_speed_only) {
 }
 
 
-//---------------------------  Lattice  -----------------------------
+//---------------------------  Spartan  -----------------------------
 
 fx3_dev_err_t FX3Dev::send8bitSPI(uint8_t _addr, uint8_t _data)
 {
@@ -509,15 +509,52 @@ fx3_dev_err_t FX3Dev::send8bitSPI(uint8_t _addr, uint8_t _data)
     return txControlToDevice( buf, len, cmd, value, index);
 }
 
-fx3_dev_err_t FX3Dev::read8bitSPI(uint8_t addr, uint8_t* data)
+fx3_dev_err_t FX3Dev::read8bitSPI(uint8_t addr, uint8_t* data, uint8_t chip)
 {
     uint8_t buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-    uint32_t len = 16;
+    uint32_t len = 1;
     uint8_t addr_fix = (addr|0x80);
+
+    //fprintf( stderr, "FX3Dev::read8bitSPI() from  0x%03X\n", addr );
+
+    uint8_t cmd = REG_READ8;
+    uint16_t value = addr_fix;
+    uint16_t index = chip;
+
+    fx3_dev_err_t success = txControlFromDevice(buf, len, cmd, value, index );
+    *data = buf[0];
+
+    return success;
+}
+
+
+
+fx3_dev_err_t FX3Dev::writeADXL(uint8_t _addr, uint8_t _data)
+{
+    uint8_t  buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 16;
+
+    buf[0] = (uint8_t)(_addr << 1);
+    buf[1] = (uint8_t)_data;
+
+    uint8_t cmd = ADXL_WRITE;
+    uint16_t value = 0;
+    uint16_t index = 1;
+
+    //fprintf( stderr, "Reg:%u 0x%04x \n", _addr, _data);
+
+    return txControlToDevice( buf, len, cmd, value, index);
+}
+
+fx3_dev_err_t FX3Dev::readADXL(uint8_t addr, uint8_t* data)
+{
+    uint8_t buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 1;
+    uint8_t addr_fix = ((addr << 1) | 0x01);
 
     // fprintf( stderr, "FX3Dev::read16bitSPI_ECP5() from  0x%03X\n", addr );
 
-    uint8_t cmd = REG_READ8;
+    uint8_t cmd = ADXL_READ;
     uint16_t value = addr_fix;
     uint16_t index = *data;
     fx3_dev_err_t success = txControlFromDevice(buf, len, cmd, value, index );
@@ -525,6 +562,7 @@ fx3_dev_err_t FX3Dev::read8bitSPI(uint8_t addr, uint8_t* data)
 
     return success;
 }
+
 
 fx3_dev_err_t FX3Dev::sendECP5(uint8_t* _data, long _data_len)
 {
@@ -636,7 +674,7 @@ fx3_dev_err_t FX3Dev::setDAC(unsigned int _data)
     uint8_t  buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     uint32_t len = 16;
 
-    buf[0] = (uint8_t)(_data>16);
+    buf[0] = (uint8_t)(_data>>16);
     buf[1] = (uint8_t)(_data>>8);
     buf[2] = (uint8_t)_data;
 
@@ -698,6 +736,18 @@ fx3_dev_err_t FX3Dev::reset_nt1065()
     uint16_t index = 1;
 
     return txControlToDevice(buf, len, cmd, value, index);
+}
+
+fx3_dev_err_t FX3Dev::set_spi_clock(uint16_t _clock)
+{
+    uint8_t  buf[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    uint32_t len = 1;
+
+    uint8_t cmd = SET_SPI_CLOCK;
+    uint16_t value = _clock;
+    uint16_t index = 16;
+
+    return txControlToDevice( buf, len, cmd, value, index);
 }
 
 //------------------------------------------------------------

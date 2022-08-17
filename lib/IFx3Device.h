@@ -33,9 +33,11 @@ public:
     virtual fx3_dev_debug_info_t getDebugInfoFromBoard( bool ask_speed_only = false ) = 0;
     virtual void readFwVersion() = 0;
 
-    //------------------------ Lattice control -----------------------------
-    virtual fx3_dev_err_t send8bitSPI(unsigned char addr, unsigned char data) = 0;
-    virtual fx3_dev_err_t read8bitSPI(unsigned char addr, unsigned char* data) = 0;
+    //------------------------ Spartan and NT control -----------------------------
+    virtual fx3_dev_err_t send8bitSPI(uint8_t addr, unsigned char data) = 0;
+    virtual fx3_dev_err_t read8bitSPI(uint8_t addr, unsigned char* data, uint8_t chip = 0) = 0;
+    virtual fx3_dev_err_t writeADXL(uint8_t addr, unsigned char data) = 0;
+    virtual fx3_dev_err_t readADXL(uint8_t addr, unsigned char* data) = 0;
     virtual fx3_dev_err_t sendECP5(uint8_t* buf, long len) = 0;
     virtual fx3_dev_err_t recvECP5(uint8_t* buf, long len) = 0;
     virtual fx3_dev_err_t resetECP5() = 0;
@@ -43,12 +45,13 @@ public:
     virtual fx3_dev_err_t checkECP5() = 0;
     virtual fx3_dev_err_t csonECP5() = 0;
     virtual fx3_dev_err_t csoffECP5() = 0;
-    virtual fx3_dev_err_t setDAC(unsigned int data) = 0;
+    virtual fx3_dev_err_t setDAC(uint32_t data) = 0;
     virtual fx3_dev_err_t device_start() = 0;
     virtual fx3_dev_err_t device_stop() = 0;
     virtual fx3_dev_err_t device_reset() = 0;
     virtual fx3_dev_err_t reset_nt1065() = 0;
     virtual fx3_dev_err_t load1065Ctrlfile(const char* fwFileName, int lastaddr) = 0;
+    virtual fx3_dev_err_t set_spi_clock(uint16_t _clock) = 0;
 
 protected:
     virtual ~IFx3Device() {}
